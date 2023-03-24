@@ -1,0 +1,34 @@
+---
+title: Custom Fields
+date: 2020-06-19
+published: true
+---
+
+<header>
+	<h1>Custom Fields</h1>
+  <p>Add custom data to your request payload</p>
+</header>
+
+
+## Crafting Metadata
+
+Crafting metadata will depend on your language's handling of JSON. Common metadata are:
+<UnorderedList items={["Invoice ID", "Cart ID", "Cart Items", "Payment medium (site/app)"]} />
+
+The `custom_fields` key is reserved for an array of custom fields that should show on the dashboard when you click the transaction. 
+
+Custom fields have 3 keys: `display_name`, `variable_name`, and `value`. The display name will be the label for the value when displaying.
+
+## Sample
+
+<Tabs links={{json: "JSON"}} filepath="/payments/custom-fields/metadata.js" />
+
+<!-- ## Cancel Action
+
+You can redirect your users to a chosen URL when they cancel a payment. This is done by setting a `cancel_action` in your metadata:
+
+```json
+"metadata": {
+  "cancel_action": "https://your-cancel-url.com"
+}
+``` -->

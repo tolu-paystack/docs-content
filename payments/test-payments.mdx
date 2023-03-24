@@ -1,0 +1,52 @@
+---
+title: Test Payments
+date: 2019-01-24
+published: true
+---
+
+<header>
+    <h1>Test Payments</h1>
+    <p>You can use the following test details to test different payment channels.</p>
+</header>
+
+## Cards
+
+<Callout type="info" title="Card expiry date">
+  The expiry date for each card can be any date in the future. 
+</Callout>
+
+### Successful Cards
+<CardContainer>
+  <TestCard title='No validation' subtitle='(reusable)' pan='408 408 408 408 408 1' cvv='408' />
+  <TestCard title='PIN validation'  pan='5078 5078 5078 5078 12' cvv='081' pin="1111" />
+  <TestCard title='PIN + OTP validation' pan='5060 6666 6666 6666 666' cvv='123' pin="1234" otp="123456" />
+  <TestCard title='PIN + Phone + OTP validation' pan='5078 5078 5078 5078 04' cvv='884' pin="0000" otp="123456" />
+  <TestCard title='Bank Auth Simulation' subtitle='(reusable)' pan='4084 0800 0000 0409' cvv='000' />
+</CardContainer>
+
+### Failed Cards
+<CardContainer>
+  <TestCard title='Declined' pan='4084 0800 0000 5408' cvv='001' />
+  <TestCard title='Token Not Generated' pan='5078 5078 5078 5078 53 ' cvv='082' pin="0000" />
+  <TestCard title='500 error' pan='5060 6600 0000 0064' cvv='606' />
+  <TestCard title='Timeout error' pan='5060 6650 6066 5060 67' cvv='060' />
+</CardContainer>
+
+
+## Bank Accounts
+<CardContainer>
+  <TestAccount title='Zenith Bank' subtitle='(transaction)' pan='000 000 000 0' birthday='001' otp="123456" />
+  <TestAccount title='First Bank of Nigeria' subtitle='(transfer)' pan='000 000 000 0' code='011' />
+  <TestAccount title='Kuda Bank' pan='081 0000 000 0' pay_id='123456' />
+</CardContainer>
+
+## Mobile Money
+<CardContainer>
+  <TestMoMo title='No PIN/OTP' number='055 123 498 7' network='MTN'  />
+</CardContainer>
+
+## Dedicated Virtual Account
+You can make use of the <a href="https://demobank.paystackintegrations.com/" target="_blank" rel="noopener noreferrer">sample bank application</a> we created to initiate a transfer to your test virtual account. If you simply want to try out the <Link to="/payments/dedicated-virtual-accounts">dedicated virtual account</Link> product, kindly make use of the test account below:
+<CardContainer>
+  <TestAccount title='Demo Bank' pan='123 000 164 4' pin='0000' />
+</CardContainer>

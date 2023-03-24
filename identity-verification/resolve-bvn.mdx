@@ -1,0 +1,128 @@
+---
+title: Resolve BVN
+date: 2019-01-24
+published: false
+---
+
+<header>
+	<h1>Resolve BVN </h1>
+	<p>
+		Learn how to get a Know Your Customer (KYC) profile from a customer's Bank
+		Verification Number (BVN)
+	</p>
+</header>
+
+## Introduction
+
+<p>
+	The Resolve BVN service helps you build a KYC profile for a Nigeria-based
+	customer using their BVN.
+</p>
+<p>
+	This service has two tiers: Standard and Premium. The Premium tier provides
+	all the information in the Standard tier, as well as more granular information
+	for a more detailed KYC profile.
+</p>
+<Callout type="info" title="Pricing">
+	BVN Resolve Standard costs <strong> N10 per successful call</strong> while BVN
+	Resolve Premium costs <strong>N15 per successful call</strong>.
+</Callout>
+
+## Information Provided
+
+Here's a side by side comparison of the information provided by both tiers.
+
+<table>
+	<thead>
+		<tr>
+			<th>BVN Resolve Standard</th>
+			<th>BVN Resolve Premium</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td> First name</td>
+			<td> First name</td>
+		</tr>
+		<tr>
+			<td> Last name</td>
+			<td> Last name</td>
+		</tr>
+		<tr>
+			<td> Phone number</td>
+			<td> Phone number</td>
+		</tr>
+		<tr>
+			<td> Date of birth </td>
+			<td> Date of birth </td>
+		</tr>
+		<tr>
+			<td> &nbsp; &nbsp; &nbsp; &ndash; </td>
+			<td> Image </td>
+		</tr>
+		<tr>
+			<td> &nbsp; &nbsp; &nbsp; &ndash; </td>
+			<td> Marital Status </td>
+		</tr>
+		<tr>
+			<td> &nbsp; &nbsp; &nbsp; &ndash; </td>
+			<td> Gender </td>
+		</tr>
+		<tr>
+			<td> &nbsp; &nbsp; &nbsp; &ndash; </td>
+			<td> Nationality </td>
+		</tr>
+		<tr>
+			<td> &nbsp; &nbsp; &nbsp; &ndash; </td>
+			<td> State and LGA of origin </td>
+		</tr>
+		<tr>
+			<td> &nbsp; &nbsp; &nbsp; &ndash; </td>
+			<td> Residential Address </td>
+		</tr>
+		<tr>
+			<td> &nbsp; &nbsp; &nbsp; &ndash; </td>
+			<td> Enrollment Bank </td>
+		</tr>
+		<tr>
+			<td> &nbsp; &nbsp; &nbsp; &ndash; </td>
+			<td> Name on card </td>
+		</tr>
+	</tbody>
+</table>
+
+## BVN Resolve Standard
+
+The BVN Resolve Standard is useful for when you need basic KYC information from a customer's BVN.<RequestResponse
+links={{ bash: 'cURL', js: 'Node', php: 'PHP' }}
+filepath="/identity/bvn/resolve.js"
+/>
+
+<Callout type="info" title="Pricing">
+	BVN Resolve Standard costs <strong> N10 per successful call</strong>. You get
+	10 free requests per month. After exhausting the 10 free requests, registered
+	businesses will have to top up your Paystack balance.
+</Callout>
+
+## BVN Resolve Premium
+
+BVN Resolve Premium is best suited for when your business needs a more detailed profile from a customer's BVN.
+
+<RequestResponse
+	links={{ bash: 'cURL', js: 'Node', php: 'PHP' }}
+	filepath="/identity/bvn/resolve2.js"
+/>
+
+This is best suited for businesses in these industries:<UnorderedList
+items={[
+'Lending',
+'Savings',
+'Betting',
+'Remittance and other financial services',
+]}
+/>
+<Callout type="info" title="Pricing">
+	BVN Resolve Premium costs <strong>N15 per successful call</strong>. You'll get
+	10 free requests per month. After exhausting the 10 free requests, registered
+	businesses will have to top up your Paystack balance.
+</Callout>

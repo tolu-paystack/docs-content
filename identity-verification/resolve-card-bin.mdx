@@ -1,0 +1,21 @@
+---
+title: Resolve Card BIN
+date: 2019-01-24
+published: true
+---
+
+<header>
+	<h1>Resolve Card BIN</h1>
+</header>
+
+This endpoint takes the first 6 digits of a card PAN and returns the following details about the card:
+
+<UnorderedList items={["Card Type", "Bin", "Brand", "Sub-brand", "Bank", "Country code", "Country name"]} />
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/identity/card/resolve.js" />  
+
+You can use this endpoint to determine the country of issue of a card.
+    
+<Callout type="info" title="Pricing">
+  This endpoint is free.
+</Callout>

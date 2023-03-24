@@ -1,0 +1,293 @@
+---
+title: Payment Channels
+date: 2019-01-24
+published: true
+---
+
+<header>
+	<h1>Payment Channels</h1>
+	<Callout type="summary" title="">
+		Paystack enables you accept payments from customers using different payment channels such as: cards, mobile money accounts, QR codes, directly from their bank account or USSD.
+	</Callout>
+</header>
+
+If you use the the <Link to="/payments/accept-payments/#popup">Popup</Link> or <Link to="/payments/accept-payments/#redirect">Redirect</Link> method, the paying customer will be shown all the payment methods selected on your <a href="https://dashboard.paystack.com/#/settings/preferences" target="_blank" rel="noopener noreferrer">dashboard</a>. But if you don't want to use either option, you can initiate all the different payment channels directly from your server using the <Link to="/payments/accept-payments#charge-api">charge API</Link>.
+
+<Callout type="info" title="What channels are available?">
+	Card payment channels are available on all Paystack accounts, while the other payment channels are only available in countries where they are supported.
+</Callout>
+
+
+## Cards
+
+We strongly discourage passing card information directly to the API to avoid transmitting card data through systems that are not PCI compliant.
+
+If you are <a href="https://www.pcisecuritystandards.org/" target="_blank" rel="noopener noreferrer">PCI-DSS</a> certified and would like to be able to send cardholder information directly to our APIs from your servers, <a href="https://paystack.com/contact/support" target="_blank" rel="noopener noreferrer">reach out to us!</a>
+
+## Bank accounts
+<Callout type="info" title="Where is this available?">
+	This feature is currently only available for Naira collections in Nigeria.
+</Callout>
+
+The Pay with Bank feature allows customers pay through internet banking portal or by providing their bank account number and authenticating using an OTP sent to their phone or email.
+
+This is different from Bank Transfers where customers transfer money into a bank account.
+
+### Collect bank details
+To collect bank details, you would need to prompt the user to select their bank and enter their account number. To fetch the list of supported banks, make a `GET` request to the <ApiLink title="list banks" path="miscellaneous-bank" /> endpoint, with the additional filter `pay_with_bank=true`.
+
+The banks can be listed in a dropdown or any other format that allows the user to easily pick their bank of choice.
+
+### Create a charge
+
+Send `email`, `amount`, `metadata`, `bank` (an object that includes the `code` of the bank and `account_number` supplied by customer) and `birthday` to our Charge endpoint to start.
+
+<RequestResponse links={{ bash: "cURL", js: "Node", php: "PHP" }} filepath="/payments/payment-methods/bank.js"  />
+
+If the selected bank is Kuda, you need to make use of `phone` and `token` instead of `account_number` in the `bank` object:
+<RequestResponse links={{ bash: "cURL", js: "Node", php: "PHP" }} filepath="/payments/payment-methods/bank-1.js"  />
+
+When the API call is made, the value of the `data.status` key is `pending` as the payment is being processed in the background. The `data.status` then updates to either, `success` or `failed` depending on whether the transaction was successful or not.
+
+
+## USSD
+
+This Payment method is specifically for Nigerian customers. Nigerian Banks provide USSD services that customers use to perform transactions, and we've integrated with some of them to enable customers complete payments.
+
+The Pay via USSD channel allows your Nigerian customers to pay you by dialling a USSD code on their mobile device. This code is usually in the form of `* followed by some code and ending with #`. The user is prompted to authenticate the transaction with a PIN and then it is confirmed.
+
+All you need to initiate a USSD charge is the customer email and the amount to charge.
+
+When the user pays, a response will be sent to your webhook. Hence, for this to work properly as expected, webhooks must be set up on your Paystack Dashboard.
+
+### Create a charge
+
+Send an email and amount to the <ApiLink title="charge" path="charge" /> endpoint. Specify the USSD type you are charging as well.
+
+Below are all the USSD `types` we support. We'll add to list as we have more:
+
+<table>
+	<thead>
+		<tr>
+			<th>Bank</th>
+			<th>Type</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Guaranty Trust Bank</td>
+			<td>737</td>
+		</tr>
+		<tr>
+			<td>United Bank of Africa</td>
+			<td>919</td>
+		</tr>
+		<tr>
+			<td>Sterling Bank</td>
+			<td>822</td>
+		</tr>
+		<tr>
+			<td>Zenith Bank</td>
+			<td>966</td>
+		</tr>
+	</tbody>
+</table>
+
+<RequestResponse links={{ bash: "cURL", js: "Node", php: "PHP", json: "Response"}} filepath="/payments/payment-methods/ussd.js"  />
+
+When a charge is made, the default response provides a USSD code for the customer to dial to complete the payment.
+
+
+### Handle response
+
+When the user completes payment, a response is sent to the merchant’s webhook. Hence, for this to work properly as expected, webhooks must be set up for the merchant..
+
+The `charge.success` event is raised on successful payment. The sample response to be sent to the user’s webhook would look like:
+
+<Tabs links={{json: "JSON"}} filepath="/payments/payment-methods/ussd-event.js" />
+
+<Callout type="info" title="USSD recurring charge">
+	Charging returning customers directly is not currently available. Simply call the endpoint to start a new transaction.
+</Callout>
+
+## Mobile money
+
+The Pay via Mobile Money channel allows Ghanaian customers to pay you by entering the phone number enabled for mobile money.
+
+When the customer clicks pay, they will receive a prompt on the mobile device attached to their number asking them to confirm the payment by inputting a PIN.
+
+When the user pays, a response will be sent to your webhook. This means that you must have webhooks set up on your Paystack Dashboard.
+
+### Create a charge
+
+Send an email and amount to the <ApiLink title="charge" path="charge" /> endpoint along with a `mobile_money` object.
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/payment-methods/mobile.js" toggle="false"  />
+
+#### Provider code
+
+Here are the 3 character code for the three supported mobile money providers:
+
+<table>
+	<thead>
+		<tr>
+			<th>Provider</th>
+			<th>Character code</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr class="odd-row">
+			<td>MTN</td>
+			<td>"mtn"</td>
+		</tr>
+		<tr>
+			<td>Vodafone</td>
+			<td>"vod"</td>
+		</tr>
+		<tr class="odd-row">
+			<td>Airtel/Tigo</td>
+			<td>"tgo"</td>
+		</tr>
+	</tbody>
+</table>
+
+
+**Airtel** and **MTN** requires the customer to complete the transaction process offline, the `data.status` field would be `pay_offline`, once you get this status, there's nothing left to do. You're expected to display the `data.display_text` to your user, and then listen for <Link to="/payments/webhooks">webhook</Link> for transaction notification or requery the <Link to="/payments/verify-payments">verify transaction</Link> endpoint at interval.
+
+Here is a sample response that requires the customer to complete the process offline:
+
+<Tabs links={{json: "JSON"}} filepath="/payments/payment-methods/mobile-airtel-mtn.js" />
+
+For **Vodafone**, the customer is required to generate a voucher code by dialing the USSD code show in the **data.display_text** field, this voucher code should be collected and passed to the <ApiLink title="submit OTP" path="charge-submit-otp" /> endpoint to authorize the transaction.
+
+<Tabs links={{json: "JSON"}} filepath="/payments/payment-methods/mobile-vodafone.js" />
+
+If the mobile money customer enters the otp on time and we are able to get a response just in time, we return the success response:
+
+<Tabs links={{json: "JSON"}} filepath="/payments/payment-methods/mobile-response-jit.js" />
+
+If the transaction is started successfully and the pin is not entered on time, we return this:
+
+<Tabs links={{json: "JSON"}} filepath="/payments/payment-methods/mobile-response-late.js" />
+
+### Handle response
+
+When the user completes payment, a response is sent to the merchant’s webhook. Hence, for this to work properly as expected, webhooks must be set up for the merchant.
+
+The `charge.success` event is raised on successful payment. The sample response to be sent to the user’s webhook would look like:
+
+<Tabs links={{json: "JSON"}} filepath="/payments/payment-methods/mobile-event.js" />
+
+Charging returning customers directly is not currently available. Simply call the endpoint to start a new transaction. We have some <Link to="/payments/test-payments/#mobile-money">test credentials</Link> that can be used to run some tests.
+
+## EFT
+EFT payments are an instant bank transfer payment method where customers pay merchants through their internet banking interfaces. When the developer specifies an EFT provider, we do a redirect to the providers platform where the customer provides their payment details after which the payment is authorized.
+
+<Callout type="info" title="Where is this available?">
+	This feature is only available to South African customers.
+</Callout>
+
+### Create a charge
+
+You need to send the `email`, `amount`, `currency`, and the EFT provider to the <ApiLink title="charge" path="charge" /> endpoint:
+
+<RequestResponse links={{ bash: "cURL", js: "Node", php: "PHP" }} filepath="/payments/payment-methods/eft.js" />
+
+<Callout type="info" title="Available Providers">
+	Ozow is currently the only provider available.
+</Callout>
+
+### Handle response
+
+When the user completes payment, a response is sent to the merchant’s webhook. The merchant needs to setup webhooks to get the status of the payment. The `charge.success` event is raised on successful payment.
+
+
+## QR code
+
+The QR option generates a QR code that allow customers to use a supported mobile app to complete payments.
+
+When the customer scans the code, they authenticate on a <Link to="/payments/payment-channels#supported-apps">supported app</Link> to complete the payment. When the user pays, a response will be sent to your webhook. This means that you need to implement and set a webhook URL on your Paystack Dashboard.
+
+### Create a charge
+
+Send an email and amount to the <ApiLink title="charge" path="charge" /> endpoint along with a `qr` object. The `qr` object should contain a `provider` parameter, specifying the QR provider for the transaction. The available QR providers are:
+<table>
+	<thead>
+		<tr>
+			<th>Provider</th>
+			<th>Availability</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr class="odd-row">
+			<td>masterpass</td>
+			<td>South Africa</td>
+		</tr>
+		<tr>
+			<td>visa</td>
+			<td>Nigeria</td>
+		</tr>
+	</tbody>
+</table>
+
+<Callout type="info" title="Supported Apps">
+	The <code>masterpass</code> provider supports both SnapScan and <Link to="/payments/payment-channels/#masterpass">Masterpass-supported</Link> apps for completing a payment. 
+</Callout>
+
+<RequestResponse links={{ bash: "cURL", js: "Node", php: "PHP" }} filepath="/payments/payment-methods/qr.js" />
+
+### Handle response
+
+When the user completes payment, a response is sent to the merchant’s webhook. Hence, for this to work properly as expected, webhooks must be set up for the merchant.
+
+The `charge.success` event is raised on successful payment. The sample response to be sent to the user’s webhook would look like:
+
+<Tabs links={{json: "JSON"}} filepath="/payments/payment-methods/qr-event.js" />
+<Callout type="info" title="QR code recurring charge">
+	Charging returning customers directly is currently not available. You need to call the endpoint to start a new transaction.
+</Callout>
+
+### Supported Apps
+In order to complete a payment, your customers can scan or enter the code in a supported application. Here are the supported applications by providers:
+
+#### Visa
+Customers can scan Visa QR codes from the following banking apps:
+<UnorderedList items={["Ecobank", "First Bank", "Fidelity Bank", "Access Bank", "Access (Diamond) Bank", "Zenith Bank"]} />
+
+#### SnapScan
+Customers can complete a payment in a snap by scanning the QR code with their SnapScan iOS or Android app.
+
+#### Masterpass
+Customers can scan Masterpass QR codes from any of the mobile apps listed below:
+
+<table>
+	<thead>
+		<tr>
+			<th>Standalone Masterpass</th>
+			<th>Banking</th>
+			<th>3rd Party</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr class="odd-row">
+			<td>Nedbank Masterpass</td>
+			<td>FNB Pay</td>
+			<td>Spot (by Virgin Money)</td>
+		</tr>
+		<tr>
+			<td>Standard Bank SA Masterpass</td>
+			<td>Capitec Banking</td>
+			<td>Vodapay</td>
+		</tr>
+		<tr>
+			<td>Capitec Masterpass</td>
+			<td>Nedbank Money</td>
+			<td>Chips</td>
+		</tr>
+		<tr>
+			<td>Absa Masterpass</td>
+			<td>Nedbank Avo</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>

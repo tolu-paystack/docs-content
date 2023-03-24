@@ -1,0 +1,79 @@
+---
+title: API Changelog
+date: 2021-10-06
+published: true
+---
+
+<header>
+	<h1>API Changelog</h1>
+  <p>Stay up-to-date with the latest changes on our APIs</p>
+</header>
+
+## Upcoming changes
+We are working on exciting features. While we work, <a className="link-text" href="https://paystack.com/docs/api" target="_blank" rel="noopener noreferrer">keep building</a>!
+
+## June 2022
+<ul class="default-list">
+    <li>We added a <code>reason</code> parameter to the <code>customeridentification.failed</code> webhook event. Merchants can use this parameter to find out the cause of a 
+    <Link to="/identity-verification/validate-customer/#listen-for-verification-status"> failed customer validation</Link>. </li>
+    <li>We added <code>middle_name</code> as an optional parameter to the <ApiLink title="Customer Validation" path="customer-validate" />. You can add this as an extra parameter when 
+    validating a customer's details.</li>
+</ul>
+
+## May 2022
+<ul class="default-list">
+    <li>We added an endpoint to <ApiLink title="Requery Dedicated Virtual Accounts" path="dedicated-virtual-account-requery" />. Merchants
+  can use this endpoint to check a virtual account for new transactions that haven't been processed yet.  Calling this endpoint will trigger a background requery process, and if any pending transactions are found, the transaction will be created, and the webhook notification will be sent to your server.</li>
+</ul>
+
+## February 2022
+<ul class="default-list">
+    <li>We added <code>first_name</code>, <code>last_name</code> and <code>phone</code> to the request body of the <ApiLink title="Create Dedicated Virtual Account" path="dedicated-virtual-account-create" />. Merchants
+  can use these parameters to update an existing customer's record and create a dedicated virtual account in one API call.</li>
+</ul>
+
+## December 2021
+We updated the statuses of refunds to better capture the state of a refund:
+<ul class="default-list">
+  <li><code>pending</code>: The refund initiated, waiting for response from the processor.</li>
+  <li><code>processing</code>: The refund has been received by the processor.</li>
+  <li><code>processed</code>: The refund has successfully been processed by the processor.</li>
+	<li><code>failed</code>: The refund cannot be processed. Your account is credited with refund amount.</li>
+</ul>
+
+When a refund is initiated for a transaction, the transaction's status previously showed <code>reversed</code> regardless of whether the refund had been processed. We're now better reflecting the status of a transaction with the following:
+<ul class="default-list">
+  <li><code>reversal pending</code>: The refund is pending or still processing.</li>
+  <li><code>reversed</code>: The refund has been successfully processed.</li>
+  <li><code>success</code>: The refund failed and your account is credited with the refund amount.</li>
+</ul>
+
+We now send webhook events to monitor the state of a refund:
+<ul class="default-list">
+  <li>refund.pending</li>
+  <li>refund.processing</li>
+  <li>refund.processed</li>
+	<li>refund.failed</li>
+</ul>
+Kindly check out the <Link to="/payments/refunds">Refunds documentation</Link> to learn more about refunds and how to automate your refunds.
+
+## November 2021
+We added three new statuses to the <ApiLink title="Subscription" path="subscription" />:
+<ul class="default-list">
+  <li><code>non-renewing</code>: The subscription is still active but won't be charged on the next payment date and will be marked as completed.</li>
+  <li><code>attention</code>: The subscription is still active, but there was an issue while trying to charge the customer's card. The issue can be an expired card, insufficient funds, etc. We'll attempt charging the card again on the next payment date.</li> 
+  <li><code>cancelled</code>: The subscription has been cancelled.</li>
+</ul>
+Kindly check the <Link to="/payments/subscriptions#subscription-statuses">list of subscriptions statuses</Link> to learn more.
+
+## October 2021
+<ul class="default-list">
+  <li>We deprecated support for BVN type on the <ApiLink title="Customer Validation" path="customer-validate" />. Going forward, we advise against using the <code>type: "bvn"</code> and <code>value</code> parameter in the request body in favour of <Link to="/identity-verification/validate-customer#bank-account-validation"> Bank Account validation</Link> for existing and new customers.</li>
+</ul>
+
+## September 2021
+<ul class="default-list">
+  <li>We added <code>account_number</code> to the request body of the <ApiLink title="Customer Validation" path="customer-validate" />. This will 
+  require merchants to make use of <Link to="/identity-verification/validate-customer#bank-account-validation"> Bank Account validation</Link> for existing and new customers.</li>
+</ul>
+

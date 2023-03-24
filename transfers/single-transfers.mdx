@@ -1,0 +1,170 @@
+---
+title: Single Transfers
+date: 2019-01-24
+published: true
+---
+
+<header>
+	<h1>Single Transfers</h1>
+	<Callout type="summary" title="In a nutshell">
+    With the Paystack Transfer API, you can send money to bank accounts and mobile money wallet
+  </Callout>
+</header>
+
+You can transfer money in four easy steps:
+<OrderedList items={[
+  <Link to="/transfers/single-transfers/#verify-the-account-number">Verify the account number</Link>,
+  <Link to="/transfers/single-transfers#create-a-transfer-recipient">Create a transfer recipient</Link>,
+  <Link to="/transfers/single-transfers#initiate-a-transfer">Initiate a transfer</Link>,
+  <Link to="/transfers/single-transfers#listen-for-transfer-status">Listen for transfer status</Link>
+  ]} 
+/>
+
+<Callout type="info" title="Before you begin!">
+  To send money on Paystack, you need API keys to authenticate your transfers. You can find your keys on the Paystack 
+  Dashboard under <a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" rel="noopener noreferrer">Settings → API Keys & Webhooks</a>. 
+</Callout>
+
+## Verify the account number
+You need to collect the customer's account details and confirm that it’s valid before sending money. This is to ensure you don’t send money to the wrong or invalid account. Kindly check out the <Link to="/identity-verification/verify-account-number">Verify Account Number</Link> page to learn about how to verify account details in different regions.
+
+
+## List banks and telcos
+When creating a transfer recipient, you need the bank or telco details of the customer. The <ApiLink title="list bank" path="miscellaneous-bank"/> can be used to get all supported banks and telcos in a country.
+
+To fetch a list of banks in a country, make a `GET` request passing the `currency` in the query parameter:
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/transfers/single/list-bank.js"  />
+
+To fetch a list of supported telcos for mobile money, you can add `currency` and `type` in the query parameters for the <ApiLink title="list bank" path="miscellaneous-bank"/>:
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/transfers/single/list-telcos.js"  />
+
+## Create a transfer recipient
+
+Before sending money to an account, you need to create a transfer recipient with the customer’s account details.
+
+The recipient type can take the following values based on country:
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Currency</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>nuban</code></td>
+      <td>NGN</td>
+      <td>This means the Nigerian Uniform Bank Account Number. It represents bank accounts in Nigeria.</td>
+    </tr>
+    <tr>
+      <td><code>mobile_money</code></td>
+      <td>GHS</td>
+      <td>Mobile Money or MoMo is an account tied to a mobile number</td>
+    </tr>
+    <tr>
+      <td><code>basa</code></td>
+      <td>ZAR</td>
+      <td>This means the Banking Association South Africa. It represents bank accounts in South Africa</td>
+    </tr>
+    <tr>
+      <td><code>authorization</code></td>
+      <td>All</td>
+      <td>This is a unique code that represents a customer’s card. We return an authorization code after a user makes a payment with their card.</td>
+    </tr>
+  </tbody>
+</table>
+
+To create the transfer recipient, make a `POST` request to the <ApiLink title="transfer recipient" path="transfer-recipient-create" /> passing one of the following customer’s detail:
+1. Bank account
+2. Mobile money
+3. Authorization code
+
+### Bank account
+Here, you specify the `type` based on your integration currency, then pass the customer’s details:
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/transfers/single/transfer-receipient-bank.js" />
+
+### Mobile money
+With mobile money, the `bank_code` takes the telco code as its value and the mobile number is passed to the `account_number` parameter: 
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/transfers/single/transfer-receipient-momo.js" />
+
+### Authorization code
+An authorization code is returned after a successful card payment by a customer. Combining the authorization code with the email address used for payment, you can create a transfer recipient:
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/transfers/single/transfer-receipient-auth.js" />
+
+<Callout type="warning" title="Account Number Association">
+  If an account number isn’t associated with the authorization code, we return a response with a message: <code>Account details not found for this authorization</code>. If you get this error, kindly request the customer’s account details and follow the process to create a transfer recipient using a bank account.
+</Callout>
+
+The `recipient_code` from the data object is the unique identifier for this user and would be used to make transfers to the specified account. This code should be saved with the customer's records in your database.
+
+## Initiate a transfer
+To send money to a customer, you make a `POST` request to the <ApiLink title="Initate Transfer" path="transfer-initiate" />, passing the `recipient_code` previously created.
+
+<Callout type="info" title="Disabling OTP">
+  When building a fully automated system, you might need to disable OTP for transfers. You can disable OTP from the
+  <a href="https://dashboard.paystack.com/#/settings/preferences" target="_blank" rel="noopener noreferrer"> Preferences tab</a> on the Paystack Dashoard. You should uncheck the <strong>Confirm transfers before sending</strong> checkbox as shown in the image below.
+</Callout>
+
+<img alt="Image of the disabled OTP state of tranfers" src="../../assets/images/disabled_otp.png" />
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/transfers/single/initiate-transfer.js"  />
+
+When you send this request, if there are no errors, the response comes back with a pending status, while the transfer is being processed. 
+
+<Callout type="warning" title="Retrying a transfer">
+  If there is an error with the transfer request, <strong>kindly retry the transaction with the same <code>reference</code> in order to avoid double crediting</strong>. If a new <code>reference</code> is used, the transfer would be treated as a new request.
+</Callout>
+
+Test transfers always return success, because there is no processing involved. The live transfers processing usually take between a few seconds and a few minutes. When it's done processing, a notification is sent to your webhook URL.
+
+
+## Listen for transfer status
+<Callout type="info" title="Receiving Notifications">
+  In order to receive notifications, you need to <Link to="/payments/webhooks">implement a webhook URL</Link> and set the webhook URL on your <a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" rel="noopener"> Paystack Dashboard</a>.
+</Callout>
+
+When a transfer is initiated, it could take a few seconds or minutes to process. Once processed, Paystack sends the final status of the transfer as a `POST` request to your webhook URL.
+
+<table>
+  <thead>
+    <tr>
+      <th>Event</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>transfer.success</td>
+      <td>This is sent when the transfer is successful</td>
+    </tr>
+    <tr>
+      <td>transfer.failed</td>
+      <td>This is sent when the transfer fails</td>
+    </tr>
+    <tr>
+      <td>transfer.reversed</td>
+      <td>This is sent when we refund a previously debited amount for a transfer that couldn’t be completed</td>
+    </tr>
+  </tbody>
+</table>
+
+<TabsMulti language="json" links={{transfer_successful: "Transfer Successful", transfer_failed: "Transfer Failed", 
+  transfer_reversed: "Transfer Reversed" }} 
+  filepath="/payments/webhooks/events.js" />
+
+The response for a transfer also contains a **unique transfer code** to identify this transfer. You can use this code to call the <ApiLink title="Fetch Transfer" path="transfer-fetch" /> endpoint to fetch status and details of the transfer anytime you want.
+
+## Authenticating with OTP
+As an additional layer of security, a Paystack business owner might want to confirm a transfer by using the One Time Password (OTP) sent to their 
+device.
+
+If you have <a href="https://support.paystack.com/hc/en-us/articles/360009973339-Can-I-receive-an-OTP-to-authorise-my-transfers-" target="_blank" rel="noopener">
+OTP enabled on your Paystack Dashboard</a> and you <Link to="#initiate-a-transfer">intiate a transfer</Link> via the API, you get a response with `message: Transfer requires OTP to continue` and `data.status: otp`
+
+<Tabs links={{json: "Response"}} filepath="/transfers/single/initiate-transfer-otp.js" />
+
+
+When the business owner supplies the OTP sent to their mobile number (and email if enabled), the transfer can be completed by using our <ApiLink title="Finalize Transfer" path="transfer-finalize" /> endpoint:
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/transfers/single/finalize-transfer.js" />

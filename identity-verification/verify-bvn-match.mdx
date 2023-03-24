@@ -1,0 +1,27 @@
+---
+title: Verify BVN Match
+date: 2019-01-24
+published: true
+---
+
+<header>
+	<h1>Verify BVN Match</h1>
+</header>
+
+<Callout type="info" title="Feature Availability">
+  This feature is only available to businesses in Nigeria.
+</Callout>
+
+
+The BVN Match service allows you to verify that an account number, first name, last name and middle name of a user matches their BVN.
+
+The endpoint accepts a `POST` request, with the `account_number`, `BVN`, and `bank_code` as required parameters, while `first_name` , `last_name` and `middle_name` are optional parameters.
+
+This endpoint returns the following details with boolean values:
+<UnorderedList items={["Is Blacklisted", "First name", "Last name", "Middle name"]} />
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/identity/bvn/match.js" />    
+
+<Callout type="info" title="Pricing">
+  This service cost <strong>N15 per call</strong>, but you get <strong>10 free calls per month</strong>. After exhausting the 10 free calls, registered businesses would have to top up your Paystack balance to continue using this service.
+</Callout>

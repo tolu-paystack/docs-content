@@ -1,0 +1,45 @@
+---
+title: Payments
+date: 2020-01-24
+published: true
+---
+
+<header>
+	<h1>Payments</h1>
+	<p>Learn how to receive fast and secure payments with Paystack.</p>
+</header>
+
+## Getting started
+<CardContainer>
+  <Card header={{ title: 'Accept Payments', route: '/payments/accept-payments'}}
+    description="Customers can pay you using any of our supported payment methods." />
+  <Card header={{ title: 'Recurring Charges', route: '/payments/recurring-charges' }}
+    description="Charge customers on a recurring basis with subscriptions or authorizations." />
+  <Card header={{ title: 'Split Payments', route: '/payments/split-payments'}}
+    description="Automatically split your transaction payouts into multiple accounts." />
+  <Card header={{ title: 'Libraries and Plugins', route: '/libraries-and-plugins' }}
+    description="Integrate to Paystack with plugins and libraries of your preferred language." />
+</CardContainer>
+
+
+## Explore demos
+We’ve put together simple projects to demonstrate how the Paystack API works for various financial services. <a href="https://github.com/PaystackOSS/" target="_blank" rel="noopener noreferrer">Explore all demos</a> or start with the most popular ones below.
+
+<CardContainer>
+  <DemoCard
+    title="Gift Store"
+    link="PaystackOSS/sample-gift-store"
+    apis={[
+      { title: 'Accept Payments', route: '/payments/accept-payments' },
+      { title: 'Verify Payments', route: '/payments/verify-payments' },
+    ]}
+  />
+  <DemoCard
+    title="Movie Ticket"
+    link="PaystackOSS/sample-movie-ticket"
+    apis={[
+      { title: 'Accept Payments', route: '/payments/accept-payments' },
+      { title: 'Verify Payments', route: '/payments/verify-payments' },
+    ]}
+  />
+</CardContainer>

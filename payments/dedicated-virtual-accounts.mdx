@@ -1,0 +1,157 @@
+---
+title: Dedicated Virtual Accounts
+date: 2020-06-19
+published: true
+---
+
+<header>
+	<h1>Dedicated Virtual Accounts</h1>
+  <p>Learn how to create virtual accounts for your customers to pay you with.</p>
+</header>
+
+<Callout type="info" title="Feature Availability">
+  This feature is only available to registered businesses in Nigeria that have successfully completed <ExternalLink title="the go-live process" link="https://support.paystack.com/hc/en-us/articles/360009881220-How-do-I-activate-my-Paystack-Registered-Business-" />.
+</Callout>
+
+
+## Introduction
+Dedicated Virtual Accounts is a feature on the Paystack Dashboard and API that lets you create dedicated Nigerian bank accounts for your customers to pay you with.
+
+When you create a dedicated virtual account for a customer, all bank transfers to that account will automatically be recorded as transactions from that customer. 
+
+To assign a dedicated virtual account to a customer, you need to:
+
+<OrderedList items={[
+  <Link to="/payments/dedicated-virtual-accounts#create-a-customer">Create a customer</Link>,
+  <Link to="/payments/dedicated-virtual-accounts#set-up-webhooks">Set up webhooks</Link>,
+  <Link to="/payments/dedicated-virtual-accounts#validate-a-customer">Validate a customer</Link>,
+  <Link to="/payments/dedicated-virtual-accounts#create-a-dedicated-virtual-account">Create a dedicated virtual account</Link>
+]}
+/>
+
+## Create a customer
+A dedicated virtual account is tied to a customer so you need to create a customer by passing the <code>email</code>, <code>first_name</code>, <code>last_name</code> and <code>phone</code> to the <ApiLink title="Create customer" path="customer-create" />.
+
+If the customer already exists on your platform, kindly ensure the customer's <code>first_name</code>, <code>last_name</code> and <code>phone</code> are set. This is because we need the customer's details to create a bank account. For customers created without these details, you can update the customer record by passing  <code>first_name</code>, <code>last_name</code> and <code>phone</code>  when creating the virtual account with   <ApiLink title="Create Dedicated Virtual Account" path="dedicated-virtual-account-create" />
+
+## Set up webhooks
+Bank transfers happen from external sources and we only get notified after the transfer is complete. The only way to know when a payment has been done is <Link to="/payments/webhooks">through webhooks</Link>. 
+
+The `charge.success` webhook event lets you know when you've received a bank transfer payment.
+Here's a sample authorization object in the `charge.success` event for a dedicated virtual account payment: 
+
+<Tabs links={{json: "JSON"}} filepath="/payments/dedicated-virtual-account/event.js" />
+
+## Validate a customer
+For compliance reasons, businesses that offer their services under the business categories - **Betting**, **Financial services**, and **General services** can only generate bank account numbers for customers whose personal identity information has been validated. This information is then used in naming the bank account number. Here's how to   <Link to="/identity-verification/validate-customer" >validate a customer's identity.</Link>
+
+<Callout type="warning" title="Get Customer's Consent">
+Generating a dedicated virtual account requires personal customer information, and should only be used with a customer's express consent, not by default.
+</Callout>
+
+## Create a dedicated virtual account
+To create a dedicated virtual account for a customer, send a `POST` request to our <ApiLink title="Create Dedicated Virtual Account" path="dedicated-virtual-account-create" />.
+
+<Callout type="info" title="Supported banks">
+  We currently support Access Bank and Wema Bank. You can get available banks using the <ApiLink title="Fetch Providers" path="dedicated-virtual-account-providers" /> endpoint.
+</Callout>
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/dedicated-virtual-account/create-dedicated-virtual-account" />
+
+### Account naming
+When the customer attempts to make a transfer to the created account number, the account name would be in the format: <strong></strong>
+  <OrderedList items={[
+    <span> <strong>Access Bank - Product Name Customer Name. </strong> </span>,
+    <span> <strong>Wema Bank - Product Name / Customer Name. </strong></span>
+  ]} />
+
+<Callout type="info" title="Account Limit">
+  By default, you can generate up to 1000 dedicated bank accounts for your customers. This limit can be increased upon review of your business and use-case. To increase the limit for your business, please send an email to support@paystack.com
+</Callout>
+
+
+  <Callout type="info" title="Testing Dedicated Virtual Accounts">
+          To create Dedicated Virtual Accounts using your test secret key, use <code>test-bank</code> as the <code>preferred_bank</code> in the request body parameters.
+          
+          You can also make a transfer to the test virtual accounts using our  <Link to="https://demobank.paystackintegrations.com/"> demo bank</Link> app.
+  </Callout>
+
+
+## Get a customer's dedicated virtual account
+If you want to retrieve a customer's dedicated virtual account, call the <ApiLink title="Fetch Customer" path="customer-fetch" /> endpoint. You can retrieve the dedicated virtual account from the `dedicated_account` object in the response:
+
+<Tabs links={{json: "JSON"}} filepath="/payments/dedicated-virtual-account/customer.js" />
+
+
+
+
+
+## Requery a customer's dedicated virtual account
+When a customer makes a transfer to a dedicated virtual account, a transaction is automatically created for the customer, and a webhook is sent to your server to notify you of the transaction. This typically happens within a few minutes. 
+
+However, in some cases, the notification could take longer to come in. When this happens, the customer might reach out to you that their account/wallet hasn't been credited, or they would try to refresh their balance in your application.
+
+In this scenario, you can use the  <ApiLink title="Requery Dedicated Virtual Account" path="dedicated-virtual-account-requery" />  endpoint to check the virtual account for new transactions that haven't been processed yet. Calling this endpoint will trigger a background requery process, and if any pending transactions are found, the transaction will be created, and the webhook notification will be sent to your server.
+ 
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/dedicated-virtual-account/requery" />
+
+<Callout type="warning" title="Rate Limit">
+  You're only allowed to requery a dedicated virtual account once every ten minutes. If you try to requery a dedicated virtual account more than once in a 10 minute window, the request won't be processed.
+</Callout>
+
+
+
+
+## Split payment on dedicated virtual account
+Split payment for dedicated virtual allows you to automatically split funds received into a dedicated virtual account between your main settlement bank account and one or more bank account(s). 
+
+<Callout type="info" title="Prerequisite">
+  You need a basic knowledge of <Link to="/payments/split-payments">Split Payments</Link> or <Link to="/payments/multi-split-payments">Multi-split Payments</Link> before proceeding with this section.
+</Callout>
+
+There are two ways to add split payment on dedicated virtual account:
+
+<OrderedList items={[
+  <Link to="/payments/dedicated-virtual-accounts#add-a-subaccount-when-creating-a-dedicated-virtual-account">Add a subaccount when creating a dedicated virtual account</Link>,
+  <Link to="/payments/dedicated-virtual-accounts#add-a-subaccount-to-an-existing-dedicated-virtual-account">Add a subaccount to an existing dedicated virtual account</Link>
+]}
+/>
+
+For multi-split payment on dedicated virtual account:
+
+<OrderedList items={[
+  <Link to="/payments/dedicated-virtual-accounts#add-a-split-code-when-creating-a-dedicated-virtual-account">Add a split code when creating a dedicated virtual account</Link>,
+  <Link to="/payments/dedicated-virtual-accounts#add-a-split-code-to-an-existing-dedicated-virtual-account">Add a split code to an existing dedicated virtual account</Link>
+]}
+/>
+
+
+### Add a subaccount when creating a dedicated virtual account
+You can add a subaccount code to the payload when you create a dedicated virtual account for the customer
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/dedicated-virtual-account/assign-subaccount.js" />
+
+### Add a subaccount to an existing dedicated virtual account
+When updating an already existing dedicated virtual account, you can pass a subaccount code as one of the parameters. 
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/dedicated-virtual-account/update-subaccount.js" />
+
+<Callout type="info" title="Updating existing subaccount on a dedicated virtual account">
+  You can also use this endpoint to edit an existing subaccount on any dedicated virtual account. If a dedicated virtual account has a subaccount, using this endpoint updates the subaccount to the new subaccount.
+</Callout>
+
+### Add a split code when creating a dedicated virtual account
+You can add a split code to the payload when you create a dedicated virtual account for the customer
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/dedicated-virtual-account/assign-subaccount-multi.js" />
+
+### Add a split code to an existing dedicated virtual account
+When updating an already existing dedicated virtual account, you can pass a split code as one of the parameters. 
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/dedicated-virtual-account/update-subaccount-multi.js" />
+
+<Callout type="info" title="Updating existing split code on a dedicated virtual account">
+  You can also use this endpoint to edit an existing split code on any dedicated virtual account. If a dedicated virtual account has a split code, using this endpoint updates the split code to the new split code.
+</Callout>
+
+
+### Remove Split
+
+This allows you to remove a subaccount code assigned to any dedicated virtual account, so that subsequent transactions received are fully settled into the main settlement account
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/dedicated-virtual-account/remove-subaccount.js" />

@@ -1,0 +1,37 @@
+---
+title: Verify Payments
+date: 2019-01-24
+published: true
+---
+
+<header>
+	<h1>Verify Payments</h1>
+	<p>
+    Verify transactions after payments using Paystack's verify API
+  </p>
+</header>
+
+## How to verify payments
+You do this by making a `GET` request to the <ApiLink title="Verify Transaction" path="transaction-verify" /> endpoint from your server using your transaction reference. This is dependent on the method you used to initialize the transaction.
+
+### From Popup or Mobile SDKs
+You'll have to send the reference to your server, then from your server you call the verify endpoint.
+
+### From the Redirect API
+You initiate this request from your callback URL. The transaction reference is returned as a query parameter to your callback URL.
+
+<Callout type="info" title="Helpful Tip">
+	If you offer digital value like airtime, wallet top-up, digital credit, etc, always confirm that you have not already delivered value for that transaction to avoid double fulfillments, especially, if you also use webhooks.
+</Callout>
+
+Here's a code sample for verifying transactions:
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/verify-payment/verify.js"  />
+
+<Callout type="warning" title="Warning">
+	The API response has a status key <code>response.status</code> indicating the status of the API call. This is <b>not</b> the status of the transaction. The status of the transaction is in the <code>data</code> object in the verify API response, i.e <code>response.data.status</code>. Learn more about  <a href="https://paystack.com/docs/api" target="_blank" rel="noopener noreferrer">Paystack API format</a>.
+</Callout>
+
+## Charge returning Users
+
+The `verify` response also returns information about the payment instrument that the user paid with in the `data.authorization` object. If the channel is `card`, then you can store the `authorization_code` for that card against that user, and use that charge the user for subsequent transaction. Learn more about <Link to="/payments/recurring-charges">recurring charges</Link>.

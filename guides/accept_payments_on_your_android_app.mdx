@@ -1,0 +1,554 @@
+---
+title: Guides - Accept Payments on your Android App
+date: 2020-06-03
+published: true
+---
+
+<header>
+	<h1>Accept Payments on your Android App</h1>
+</header>
+
+## Introduction
+
+<Callout type="info" title="Before you begin">
+  You should <a href="https://dashboard.paystack.com/#/signup" target="_blank" rel="noopener noreferrer">create a free Paystack account</a>. We'll provide you with test keys that you can use to make test your integration.
+</Callout>
+
+<Link to="/payments/accept-payments">Accepting payments</Link> in your Android app is easier than ever before with Paystack! With our <a href="https://github.com/PaystackHQ/paystack-android" target="_blank" rel="noopener noreferrer">Android SDK</a>, you can easily start accepting card payments from your customers. With the SDK you can:
+
+<UnorderedList items={["Customize the payment form to fit your brand", "Securely process payment"]} />
+
+In this tutorial, we'll be building a simple food ordering app that shows how to use Paystack SDK to accept payments in an android app. The app consists of two activities as shown below:
+
+<div class="post-image-container">
+    <img alt="Main Activity containingthe picture of a cheese burger and it's description" src="../../assets/images/food_ordering_screen_1.png" />
+    <img alt="Checkout Activity containing a form to collect card details" src="../../assets/images/food_ordering_screen_2.png" />
+</div>
+
+I grabbed the picture of the burger from Pexels. You can get it <a href="https://www.pexels.com/photo/burger-with-fried-fries-on-black-plate-with-sauce-on-the-side-1199957/" target="_blank" rel="noopener noreferrer">here</a> or use a picture of a meal you'd prefer to eat. To keep my app's size lean, I opted to use the smaller version of the image.
+
+<Callout type="info" title="Android Proficiency">
+  This guide assumes you understand the fundamentals of <a href="https://developer.android.com/guide" target="_blank" rel="noopener noreferrer">Android development</a>. The aim of this guide is to show you how to integrate payment in your android app via Paystack.
+</Callout>
+
+## Project Setup
+
+This guide was written using `Android Studio 4.1.1`, `Android Gradle plugin 4.1.0`, and `Gradle 6.5`. Earlier versions might behave differently but the end result should be the same. You should also ensure you have a stable internet connection to install the project dependencies. The app code is available in Java and Kotlin.
+
+<Callout type="info" title="Show me the code">
+  If you are only interested in integrating the SDK you can skip to the <Link to="/guides/accept_payments_on_your_android_app/#install-sdk">Install SDK</Link> section.
+</Callout>
+
+## Create Food Ordering App
+Let's open up Android Studio and create a new project with the following parameters:
+
+<table>
+	<thead>
+		<tr>
+			<th>Attribute</th>
+			<th>Value</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Project Template</td>
+			<td>Empty activity</td>
+		</tr>
+		<tr>
+			<td>Application Name</td>
+			<td>Food Checkout</td>
+		</tr>
+		<tr>
+			<td>Package name</td>
+			<td>com.yourdomain.appname</td>
+		</tr>
+		<tr>
+			<td>Language</td>
+			<td>Java or Kotlin</td>
+		</tr>
+		<tr>
+			<td>Minimum SDK</td>
+			<td>API 21: Android 5.0 (Lollipop)</td>
+		</tr>
+	</tbody>
+</table>
+
+Click the `Finish` button to confirm the project configuration and wait for the project dependencies to install completely. There are a couple of assets we'll be using for our application, so it's best we set them up before proceeding with other parts of the app.
+
+### Add the Burger Image
+If you haven't downloaded the burger image yet, you should navigate to <a href="https://www.pexels.com/photo/burger-with-fried-fries-on-black-plate-with-sauce-on-the-side-1199957/" target="_blank" rel="noopener noreferrer">Pexels</a> and download it. I used the `Free Download` drop-down to select a custom size (320 x 480) for my image. When the image downloads successfully, rename it to `burger.jpg` and drag to your application's drawable folder:
+
+![Screenshot of Android Studio with the updated burger image drawable](../../assets/images/as_burger_asset.png)
+
+### Update the Color File
+The default colors created for us by Android Studio don't match our app's design. Open the `colors.xml` file in the `values` folder and update it with the following code:
+```xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <color name="white">#FFFFFFFF</color>
+    <color name="silver_400">#CBC9C9</color>
+    <color name="azac_500">#DEB334</color>
+    <color name="cod_gray_900">#171516</color>
+    // this is used to modify the default border color of a text input
+    <color name="mtrl_textinput_default_box_stroke_color" tools:override="true">#CBC9C9</color>
+</resources>
+
+```
+
+### Update the App's Theme
+Since we've updated our `color.xml` file, our `theme.xml` will have a couple of errors because we have removed the previous color references it was using. Before updating our theme, we should delete the night version of the theme as we'll not be making use of it. We can then update our `theme.xml` file as follows:
+
+```xml
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.FoodCheckout" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/cod_gray_900</item>
+<!--        <item name="colorPrimaryVariant">@color/purple_700</item>-->
+        <item name="colorPrimaryVariant">#191919</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/azac_500</item>
+        <item name="colorSecondaryVariant">@color/azac_500</item>
+        <item name="colorOnSecondary">@color/cod_gray_900</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+    </style>
+</resources>
+```
+
+### Create a File for all Dimensions
+All text sizes, margins and dimensions used in this app were referenced from a `dimens.xml` file. To create one, right click the `values` folder, then `New > Values Resource File`:
+
+![Screenshot of Android Studio when creating a dimensions file](../../assets/images/as_dimens_creation.png)
+
+Click `OK` to confirm the file creation and add the following inside the newly created file:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="text_14">14sp</dimen>
+    <dimen name="text_16">16sp</dimen>
+    <dimen name="text_18">18sp</dimen>
+    <dimen name="text_24">24sp</dimen>
+    <dimen name="text_32">32sp</dimen>
+    <dimen name="dimen_8">8dp</dimen>
+    <dimen name="dimen_10">10dp</dimen>
+    <dimen name="dimen_16">16dp</dimen>
+    <dimen name="dimen_20">20dp</dimen>
+    <dimen name="dimen_24">24dp</dimen>
+    <dimen name="dimen_32">32dp</dimen>
+    <dimen name="image_height">420dp</dimen>
+</resources>
+```
+
+### Add String Resource
+Finally, let's add all the string resources we'll be using in the app. Open your `strings.xml` file and add the following:
+
+```xml
+<resources>
+    <string name="app_name">Food Checkout</string>
+    <string name="meal_name">Cheese Burger</string>
+    <string name="meal_description">
+        A properly seasoned patty topped with a slice of fresh tomato, cheese and lettuce enclosed in a
+        fluffy bun. It’s accompanied with a side of fries with a sweet and spicy dip.
+    </string>
+    <!-- Hardcoding the price is for demo purpose only. 
+    You shouldn't do this in prod -->
+    <string name="meal_price">Pay &#x20A6;4,000</string>
+    <string name="payment_prompt">Card details</string>
+    <string name="card_number">Card Number</string>
+    <string name="card_expiry">Card Expiry</string>
+    <string name="card_cvv">CVV</string>
+</resources>
+```
+
+## Implement App UI
+At this point we've successfully:
+
+<UnorderedList items={["Created the base application", "Added all of our required assets"]} />
+
+We can now go ahead to implement the app's interfaces.
+
+### Create Food Detail Interface
+We'll be using `MainActivity` and `activity_main.xml` for the food details interface. Open the `activity_main.xml` file and add this snippet into it:
+
+``` xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/cod_gray_900"
+    tools:context=".MainActivity">
+
+    <ImageView
+        android:id="@+id/iv_meal_image"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/image_height"
+        android:contentDescription="@string/meal_name"
+        android:scaleType="centerCrop"
+        android:src="@drawable/burger"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/iv_meal_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="@dimen/dimen_20"
+        android:layout_marginEnd="@dimen/dimen_20"
+        android:text="@string/meal_name"
+        android:textColor="@color/azac_500"
+        android:textSize="@dimen/text_24"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/iv_meal_image" />
+
+    <TextView
+        android:id="@+id/iv_meal_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/dimen_10"
+        android:layout_marginStart="@dimen/dimen_20"
+        android:layout_marginEnd="@dimen/dimen_20"
+        android:text="@string/meal_description"
+        android:textColor="@color/white"
+        android:textSize="@dimen/text_14"
+        android:lineSpacingMultiplier="1.2"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/iv_meal_name" />
+
+    <Button
+        android:id="@+id/btn_checkout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/dimen_20"
+        android:layout_marginEnd="@dimen/dimen_20"
+        android:layout_marginBottom="@dimen/dimen_20"
+        android:backgroundTint="@color/azac_500"
+        android:textColor="@color/cod_gray_900"
+        android:text="@string/meal_price"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+This interface consists of four elements:
+
+<UnorderedList items={["ImageView: This is used to render out sumptuous burger image", "TextView: This is used to render the meal name and description respectively.", "Button: This is used to confirm the order and redirect to the checkout activity."]} />
+
+### Create the Checkout Form
+We'll create a new activity to hold the checkout form. Navigate to `File > New > Activity > Empty Activity` and set the configuration as follow:
+
+![Screenshot of Android Studio when creating the Checkout Activity](../../assets/images/as_checkout_act_creation.png)
+
+Click `Finish` and wait till the Gradle sync is completed. Two new files will be generated — `CheckoutActivity` and `activity_checkout.xml`. Open the `activity_checkout.xml` file and add the following:
+``` xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/cod_gray_900"
+    android:padding="16dp"
+    tools:context=".CheckoutActivity">
+
+    <TextView
+        android:id="@+id/tv_payment_prompt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="@dimen/dimen_32"
+        android:layout_marginStart="@dimen/dimen_16"
+        android:layout_marginEnd="@dimen/dimen_16"
+        android:text="@string/payment_prompt"
+        android:textSize="@dimen/text_24"
+        android:textColor="@color/azac_500" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_card_number"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/dimen_16"
+        android:layout_marginTop="@dimen/dimen_32"
+        android:layout_marginEnd="@dimen/dimen_16"
+        android:hint="@string/card_number"
+        android:textColorHint="@color/silver_400"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_payment_prompt"
+        app:hintTextColor="@color/silver_400"
+        app:boxStrokeColor="@color/azac_500"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:inputType="text"
+            android:textColor="@color/white">
+
+        </com.google.android.material.textfield.TextInputEditText>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_card_expiry"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/dimen_16"
+        android:layout_marginTop="@dimen/dimen_32"
+        android:layout_marginEnd="@dimen/dimen_16"
+        android:hint="@string/card_expiry"
+        android:textColorHint="@color/silver_400"
+        app:layout_constraintTop_toBottomOf="@id/til_card_number"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@id/til_card_cvv"
+        app:boxStrokeColor="@color/azac_500"
+        app:hintTextColor="@color/silver_400"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:inputType="text"
+            android:textColor="@color/white">
+
+        </com.google.android.material.textfield.TextInputEditText>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_card_cvv"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/dimen_16"
+        android:layout_marginTop="@dimen/dimen_32"
+        android:layout_marginEnd="@dimen/dimen_16"
+        android:textColorHint="@color/silver_400"
+        app:layout_constraintTop_toBottomOf="@id/til_card_number"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toRightOf="@id/til_card_expiry"
+        app:boxStrokeColor="@color/azac_500"
+        app:hintTextColor="@color/silver_400"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:inputType="text"
+            android:hint="@string/card_cvv"
+            android:textColor="@color/white">
+
+        </com.google.android.material.textfield.TextInputEditText>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Button
+        android:id="@+id/btn_make_payment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/dimen_16"
+        android:layout_marginEnd="@dimen/dimen_16"
+        android:layout_marginBottom="@dimen/dimen_16"
+        android:backgroundTint="@color/azac_500"
+        android:textColor="@color/cod_gray_900"
+        android:text="@string/meal_price"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+This interface consists of five elements:
+<UnorderedList items={["TextView: This is used to give a short description of the page.", "TextInputLayout: This is used to collect the card details", "Button: This is used to initiate the payment request"]} />
+
+### Link Both Activities
+Let's create an <a href="https://developer.android.com/guide/components/intents-filters" target="_blank" rel="noopener noreferrer">intent</a> to link the food details activity to the checkout activity. Open the `MainActivity` file and create the intent:
+
+<Tabs links={{java: "Java", kotlin: "Kotlin"}} filepath="/guides/integrating_android_sdk/intent.js" />
+
+You can now run the app to make sure everything is working fine.
+
+## Install SDK
+We've successfully created our food ordering app! Now let's integrate payment into the app. The <a href="https://github.com/PaystackHQ/paystack-android" target="_blank" rel="noopener noreferrer">Paystack SDK</a> for Android can only be used for accepting card payment at this time. Other <Link to="/payments/payment-channels">payment channels</Link> can be initialized from your backend and completed on the mobile app.
+
+### Add Dependency
+The Paystack SDK provide methods to manipulate and securely send card details. 
+
+<Callout type="warning" title="Warning">
+  Do not save users' card details on your database except you are <a href="https://www.pcisecuritystandards.org/" target="_blank" rel="noopener noreferrer">PCI-DSS</a> compliant. If you need to charge the customer's card subsequently, kindly refer to the <Link to="/guides/accept_payments_on_your_android_app#recurring-payments">recurring payment</Link> section.
+</Callout>
+
+To add the dependency, open your app's `build.gradle` and add the following line:
+```
+dependencies {
+    // .... other dependencies
+    implementation 'co.paystack.android:paystack:3.1.2'
+}
+```
+<Callout type="info" title="Note">
+  Version 3.1.2 is the latest version of the SDK as of the time of this writing. You can either check the <a href="https://github.com/PaystackHQ/paystack-android" target="_blank" rel="noopener noreferrer">SDK repo</a> for the latest version or use the Android Studio auto-update feature if you have an older version installed.
+</Callout>
+
+### Enable Java 8 Support
+
+Our SDK makes use of some Java 8 features so it's necessary to enable it on your project. Add the following in your app's `build.gradle`:
+``` shell
+android { 
+    // ... Other configuration code 
+    compileOptions {   
+        sourceCompatibility JavaVersion.VERSION_1_8 
+        targetCompatibility JavaVersion.VERSION_1_8 
+    }
+
+		// or this for kotlin
+		kotlinOptions {
+        jvmTarget = '1.8'
+    } 
+}
+```
+
+Since we've made some changes in our `build.gradle` file, we'll need to rebuild the app to install the required dependencies and update the project's configuration. 
+
+### Add Public Key
+You need integration keys to initiate a payment request to Paystack. Copy your public key from your <a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" rel="noopener noreferrer">Paystack dashboard</a> and add it to the project:
+
+``` shell
+# Specifies the JVM arguments used for the daemon process.
+# The setting is particularly useful for tweaking memory settings.
+org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+# AndroidX package structure to make it clearer which packages are bundled with the
+# Android operating system, and which are packaged with your app"s APK
+# https://developer.android.com/topic/libraries/support-library/androidx-rn
+android.useAndroidX=true
+# Automatically convert third-party libraries to use AndroidX
+android.enableJetifier=true
+PSTK_PUBLIC_KEY="pk_test_xxxx"
+```
+
+I added my public key in my `gradle.properties` file because I don't track this file with version control. But feel free to use other methods you deem fit. I referenced the public key variable in my app's `build.gradle` file:
+
+``` shell
+defaultConfig {
+		// other configuration
+    ...
+    buildConfigField("String", "PSTK_PUBLIC_KEY", PSTK_PUBLIC_KEY)
+}
+```
+
+### Enable Internet Permission
+Our app will need internet access to send our payment request, so we'll need to add the required permission. Open your `AndroidManifest.xml` file and add the permission:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.paystack.foodcheckout">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application>
+        ...
+    </application>
+
+</manifest>
+```
+
+## Integrate Paystack SDK
+Let's open the `CheckoutActivity` which will contain the code to handle our card payment. We'll be creating four functions to handle different aspects of our integration:
+
+### Initialize Paystack
+This function is used to initialize the SDK:
+<Tabs links={{java: "Java", kotlin: "Kotlin"}} filepath="/guides/integrating_android_sdk/initialize_paystack.js" />
+
+### Initialize Form Variable
+This function is used to initialize the form element:
+<Tabs links={{java: "Java", kotlin: "Kotlin"}} filepath="/guides/integrating_android_sdk/initialize_form_variable.js" />
+
+### Perform Charge
+This is the function that parses payment details and initiates the payment:
+<Tabs links={{java: "Java", kotlin: "Kotlin"}} filepath="/guides/integrating_android_sdk/perform_charge.js" />
+
+Let's break down the code to understand how it works:
+
+<Tabs links={{java: "Java", kotlin: "Kotlin"}} filepath="/guides/integrating_android_sdk/perform_charge_1.js" />
+
+This code snippet fetches the card details from the checkout form and parses it. The SDK has <a href="https://github.com/PaystackHQ/paystack-android#3-collect-and-validate-card-details" target="_blank" rel="noopener noreferrer">methods</a> for validating card details before charging a card. We also fetched the amount passed from the MainActivity using `Intent` and converted it to `kobo`.
+
+<Callout type="info" title="Amount Denomination">
+  All amount sent to Paystack must be in the small denomination. It should be kobo for NGN, pesewas for GHS,  and cents for ZAR and USD. 
+</Callout>
+
+After getting all the payment details, we can then initiate a payment request:
+
+<Tabs links={{java: "Java", kotlin: "Kotlin"}} filepath="/guides/integrating_android_sdk/perform_charge_2.js" />
+
+We need to first create a card instance that will be used as one of the parameters for our `Charge` instance. The `Charge` object takes an `amount`, `email`, and `card` as required parameters. The SDK then takes the `Charge` as a required parameter in the `chargeCard` method to make payment. The `chargeCard` also takes an object with three callback methods:
+
+<UnorderedList items={["onSuccess: This is called when the payment is successful.", "beforeValidate: This is called when OTP or bank authentication is about to start.", "onError: This is called when the payment fails."]} />
+
+### Parse Response
+This method is called when a payment is successful. It parses the response and displays a toast with the transaction reference:
+<Tabs links={{java: "Java", kotlin: "Kotlin"}} filepath="/guides/integrating_android_sdk/parse_response.js" />
+
+### Link 'em All
+We'll link everything up in our `onCreate` method:
+
+<Tabs links={{java: "Java", kotlin: "Kotlin"}} filepath="/guides/integrating_android_sdk/link_em_all.js" />
+
+## Test Integration
+We can now test our app to ensure it works as expected. We have a couple of <Link to="/payments/test-payments">test cards</Link> that can be used to simulate different payment scenarios.
+
+## Confirm Payment
+<Callout type="info" title="Note">
+  You should always confirm a payment before delivering services to your customer.
+</Callout>
+
+This section assumes that you have a backend server that your mobile app rides on. You need to listen for events using your <Link to="/payments/webhooks">webhook</Link> URL. 
+
+Webhooks allow Paystack to send you events that occur on your integration in real-time. When a payment is successful, we'll send a `charge.success` event to your webhook URL that will contain information about the successful transaction. It's recommended that you listen for this event to confirm a payment. This method of transaction confirmation is more resilient when a customer has connectivity issues and when there's a delay from payment processors.
+
+Alternatively, you can send the transaction reference from the app to your backend server. Then, from your server, you can call our <ApiLink title="verify transaction" path="transaction-verify" /> endpoint with the transaction reference. The response body will contain a status field that indicates whether or not the transaction was successful.
+
+## Recurring Payments
+When a transaction is confirmed, the response body will contain an `authorization` object:
+
+``` json
+{  
+  ...
+  "data": {  
+    ...
+    "authorization": {  
+      "authorization_code":"AUTH_8dfhjjdt",
+      "card_type":"visa",
+      "last4":"1381",
+      "exp_month":"08",
+      "exp_year":"2018",
+      "bin":"412345",
+      "bank":"TEST BANK",
+      "channel":"card",
+      "signature": "SIG_idyuhgd87dUYSHO92D",
+      "reusable":true,
+      "country_code":"NG"
+    },
+    ...
+  }  
+}
+```
+
+When an `authorization` has a `"reusable": true` value, the customer's card can be used for <Link to="/payments/recurring-charges">recurring payment</Link>. You can store the `authorization_code` and use it for subsequent payment.
+
+The source code for this guide can be found in <a href="https://github.com/PaystackOSS/FoodCheckout" target="_blank" rel="noopener noreferrer">this repository</a>. The `main` branch contains the Java code while the <a href="https://github.com/PaystackOSS/FoodCheckout/tree/kotlin" target="_blank" rel="noopener noreferrer">kotlin</a> branch contains the Kotlin code.  Cheers!
+

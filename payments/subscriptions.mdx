@@ -1,0 +1,250 @@
+---
+title: Subscriptions
+date: 2021-11-03
+published: true
+---
+
+<header>
+    <h1>Subscriptions</h1>
+    <Callout type="summary" title="In a nutshell">
+      The Subscriptions API lets developers embed recurring billing functionality in their applications, without having to manage the billing cycle themselves. Merchants can easily create plans and charge customers automatically, on a recurring basis.
+    </Callout>
+</header>
+
+Here is how to set up a subscription:
+
+<OrderedList items={[
+  <Link to="/payments/subscriptions#create-a-plan">Create a plan</Link>,
+  <Link to="/payments/subscriptions#create-a-subscription">Create a subscription</Link>,
+  <Link to="/payments/subscriptions#listen-for-subscription-events">Listen for subscription events</Link>
+  ]} 
+/>
+
+
+## Create a plan
+
+Plans are the foundational building block for subscriptions. A plan represents what you're selling, how much you're selling it for, and how often you're charging for it. 
+
+You can create a plan via the <a href="https://dashboard.paystack.com/#/plans" target="_blank" rel="noopener noreferrer">Paystack Dashboard</a>, or by calling the <ApiLink title="create plan" path="plan-create" /> endpoint, passing:
+
+<table>
+  <thead>
+    <tr>
+      <th>Param</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="odd-row">
+      <td>name</td>
+      <td>string</td>
+      <td>The name of the plan</td>
+    </tr>
+    <tr>
+      <td>interval</td>
+      <td>string</td>
+      <td>The interval at which to charge subscriptions on this plan. Available options are <code>hourly</code>, <code>daily</code>, <code>weekly</code>, <code>monthly</code>, <code>quarterly</code>, and <code>annually</code></td>
+    </tr>
+    <tr class="odd-row">
+      <td>amount</td>
+      <td>integer</td>
+      <td>The amount to charge</td>
+    </tr>
+  </tbody>
+</table>
+
+<RequestResponse links={{ bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/subscriptions/create-plan.js" />
+
+
+<Callout type="info" title="Monthly Subscription Billing">
+  Billing for subscriptions with a monthly interval depends on the day of the month the subscription was created. If the subscription was created on or before the 28th of the month, it gets billed on the same day, every month, for the duration of the plan. Subscriptions created on or between the 29th - 31st, will get billed on the 28th of every subsequent month, for the duration of the plan
+</Callout>
+
+You can also pass `invoice_limit`, which lets you set how many times a customer can be charged on this plan. So if you set `invoice_limit: 5` on a monthly plan, then the customer will be charged every month, for 5 months. If you don't pass `invoice_limit`, we'll continue to charge the customer until the plan is cancelled.
+
+## Create a subscription
+
+Now that we have a plan, we can move on to the next step: subscribing a customer to that plan. There are a couple of ways we can go about creating a new subscription.
+<OrderedList items={[
+  <span>Adding Plan code to a transaction</span>,
+  <span>Using the <ApiLink title="create subscription" path="subscription-create" /> endpoint</span>
+  ]} 
+/>
+
+### Adding plan code to a transaction
+You can create a subscription for a customer using the <ApiLink title="initialize transaction" path="transaction-initialize" /> endpoint, by adding the `plan_code` of a plan you've created to the body of your request. This will override the transaction amount passed, and charge the customer the amount of the plan instead. 
+
+Once the customer pays, they'll automatically be subscribed to the plan, and will be billed according to the interval (and invoice limit) set on the plan.
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/subscriptions/create-subscription.js" />
+
+
+### Using the create subscription endpoint
+You can also create a subscription by calling the <ApiLink title="create subscription" path="subscription-create" /> endpoint, passing a `customer` and `plan`. The customer must have already done a transaction on your Paystack integration. This is because the Subscriptions API uses card authorizations to charge customers, so there needs to be an existing authorization to charge.
+
+<Callout type="info" title="Note">
+  If a customer has multiple authorizations, you can select which one to use for the subscription, by passing the <code>authorization_code</code> as <code>authorization</code> when creating the subscription. Otherwise, Paystack picks the most recent <code>authorization</code> to charge.
+</Callout>
+
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/subscriptions/create-subscription-api.js" />
+
+You can also pass a `start_date` parameter, which lets you set the date for the first debit. This makes this method useful for situations where you'd like to give a customer a free period before you start charging them, or when you want to switch a customer to a different plan.
+<Callout type="warning" title="Subscriptions are not retried">
+  If a subscription charge fails, we do not retry it. Subscriptions are ideal for situations where value is delivered after payment. e.g. Payment for internet service or a streaming service.
+</Callout>
+
+## Listen for subscription events
+
+Creating a subscription will result in Paystack sending the following events:
+
+<OrderedList items={[
+  <span>A <code>subscription.create</code> event is sent to indicate that a subscription was created for the customer who was charged.</span>,
+  <span>If you created the subscription by adding a plan code to a transaction, a <code>charge.success</code> event is also sent to indicate that the transaction was successful.</span>
+  ]} 
+/>
+
+The following steps will happen for each subsequent billing cycle:
+
+<OrderedList items={[
+  <span>An <code>invoice.create</code> event will be sent to indicate a charge attempt will be made on the subscription. This will be sent 3 days before the next payment date.</span>,
+  <span>On the next payment date, a <code>charge.success</code> event will be sent, if the charge attempt was successful. If not, an <code>invoice.payment_failed</code> event will be sent instead.</span>,
+  <span>An <code>invoice.update</code> event will be sent after the charge attempt. This will contain the final status of the invoice for this subscription payment, as well as information on the charge if it was successful</span>
+  ]} 
+/>
+
+Cancelling a subscription will also trigger events:
+<OrderedList items={[
+  <span>A <code>subscription.not_renew</code> event will be sent to indicate that the subscription will not renew on the next payment date.</span>,
+  <span>On the next payment date, a <code>subscription.disable</code> event will be sent to indicate that the subscription has been cancelled.</span>
+  ]} 
+/>
+
+On completion of all billing cycles for a subscription, a final `subscription.disable` event will be sent, with `status` set to `complete`.
+
+
+<TabsMulti language="json" links={{invoice_created: "Invoice Created", invoice_failed: "Invoice Failed", invoice_updated: "Invoice Updated", subscription_created: "Subscription Created", subscription_disable: "Subscription Disabled", subscription_not_renew: "Subscription Not Renewing", transaction_successful: "Transaction Successful"}} filepath="/payments/webhooks/events.js"  />
+
+## Managing subscriptions
+
+So you've set up your plans, and you've started subscribing customers to them. In this section, we'll talk about how to manage those subscriptions, to make sure you don't miss payments, and your customers don't lose service.
+
+#### Understanding subscription statuses
+
+Subscription statuses are key to managing your subscriptions. Each status contains information about a subscription, that lets you know if you need to take action or not, to keep that customer. There are currently 5 possible statuses a subscription can have.
+<table>
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="odd-row">
+      <td>active</td>
+      <td>The subscription is currently active, and will be charged on the next payment date.</td>
+    </tr>
+    <tr>
+      <td>non-renewing</td>
+      <td>The subscription is currently active, but we won't be charging it on the next payment date. This occurs when a subscription is about to be complete, or has been cancelled (but we haven't reached the next payment date yet).</td>
+    </tr>
+    <tr class="odd-row">
+      <td>attention</td>
+      <td>The subscription is still active, but there was an issue while trying to charge the customer's card. The issue can be an expired card, insufficient funds, etc. We'll attempt charging the card again on the next payment date.</td>
+    </tr>
+    <tr>
+      <td>completed</td>
+      <td>The subscription is complete, and will no longer be charged.</td>
+    </tr>
+    <tr class="odd-row">
+      <td>cancelled</td>
+      <td>The subscription has been cancelled, and we'll no longer attempt to charge the card on the subscription.</td>
+    </tr>
+  </tbody>
+</table>
+
+### Handling subscription payment issues
+
+As mentioned in the previous section, if a subscription's status is `attention`, then it means that there was a problem with trying to charge the customer's card, and we were unable to successfully debit them.
+
+To fix the issue, you can take a look at the `most_recent_invoice` object returned in the body of the <ApiLink title="fetch subscription" path="subscription-fetch" /> response. This object contains information about the most recent attempt to charge the card on the subscription. If the subscription's status is `attention`, then the `most_recent_invoice` object will have a status field set to `failed`, and a description field, with more information about what went wrong when attempting to charge the card.
+
+``` json
+{  
+  ...
+  "data": {  
+    ...
+    "most_recent_invoice": {
+      "subscription": 326005,
+      "integration": 530700,
+      "domain": "test",
+      "invoice_code": "INV_fjtns483x9c2fyw",
+      "customer": 92740135,
+      "transaction": 1430031421,
+      "amount": 50000,
+      "period_start": "2021-11-10T13:00:00.000Z",
+      "period_end": "2021-11-10T13:59:59.000Z",
+      "status": "attention",
+      "paid": 1,
+      "retries": 1,
+      "authorization": 242063633,
+      "paid_at": "2021-11-10T13:00:09.000Z",
+      "next_notification": "2021-11-07T13:59:59.000Z",
+      "notification_flag": null,
+      "description": "Insufficient Funds",
+      "id": 3953926,
+      "created_at": "2021-11-10T13:00:05.000Z",
+      "updated_at": "2021-11-10T13:00:10.000Z"
+      }
+    ...
+  }  
+}
+```
+
+At the beginning of each month, we'll also send a `subscription.expiring_cards` webhook, which contains information about all subscriptions with cards that expire that month. You can use this to proactively reach out to your customers, and have them update the card on their subscription.
+
+``` json
+{
+  "event":"subscription.expiring_cards",
+  "data":[
+    {
+      "expiry_date":"12/2021",
+      "description":"visa ending with 4081",
+      "brand":"visa",
+      "subscription":{
+        "id":94729,
+        "subscription_code":"SUB_lejj927x2kxciw1",
+        "amount":44000,
+        "next_payment_date":"2021-11-11T00:00:01.000Z",
+        "plan":{
+          "interval":"monthly",
+          "id":22637,
+          "name":"Premium Service (Monthly)",
+          "plan_code":"PLN_pfmwz75o021slex"
+        }
+      },
+      "customer":{
+        "id":7808239,
+        "first_name":"Bojack",
+        "last_name":"Horseman",
+        "email":"bojackhoresman@gmail.com",
+        "customer_code":"CUS_8v6g420rc16spqw"
+      }
+    }
+  ]
+}
+```
+
+### Updating the card on a subscription
+
+When a customer's subscription has a card with a payment issue that's keeping you from collecting, you can generate a link to a hosted subscription management page, where they can update their card. On the page, your customer will have the option to either add a new card, or cancel their subscription. If they choose to add a new card, Paystack will charge the card a small amount to tokenize it. Don't worry, the charge is immediately refunded.
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/subscriptions/generate-update-card-link.js" />
+
+
+If you already have a page where your subscribers can manage their subscriptions, you can choose to have a button or link on that page that will generate the link and redirect the customer to the subscription management page. 
+
+Alternatively, you can trigger an email from Paystack to the customer, with the link included.
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/subscriptions/send-update-card-link.js" />

@@ -1,0 +1,80 @@
+---
+title: Guides -  Using the Paystack Checkout in a Mobile WebView
+date: 2021-01-15
+published: true
+---
+
+<header>
+	<h1>Using the Paystack Checkout in a Mobile WebView</h1>
+</header>
+
+## Introduction
+
+When it comes to accepting payments with Paystack in your mobile applications, there are two ways to go about it:
+
+<OrderedList items={[
+  <span><strong>Using the Paystack library built for your tech stack of choice</strong> - You can integrate Paystack directly into your Android or iOS app using our mobile SDK. For mobile frameworks like Ionic or React Native, please find the libraries <Link to="/libraries-and-plugins/libraries/#community-maintained">here</Link>. </span>,
+  <span><strong>Using a WebView</strong> - You can also generate a checkout URL  and embed it in a WebView on your mobile application. We'll be covering this option in this guide. </span>
+  ]} 
+/>
+
+<Callout type="info" title="Code snippets">
+  For the purposes of this guide, we'll include sample code for mobile apps built using Flutter, React Native, native Android, and iOS, but the flow described works for all the mobile app development stacks
+</Callout>
+
+## Why use a WebView?
+There are different reasons to consider using the hosted checkout in a WebView over integrating directly with the mobile SDK. Regardless of which method you choose, the payments are still being processed by the same underlying APIs. The only difference is the payment experience you'll be offering to your customers. Some of the pros of using a WebView are:
+
+<OrderedList items={[
+  <span>By using our hosted checkout, the entire payment experience is controlled by Paystack. This means you don't have to build a checkout UI in your mobile application to accept payments, hence less code is required to integrate payments in your app.</span>,
+  <span>While only card payments are available on the mobile SDK, all other non-card payment types - such as bank transfer, USSD, Visa QR, Mobile Money, and Pay-with-Bank - are available on the checkout, and therefore available to the customer.</span>
+  ]} 
+/>
+
+<Callout type="info" title="Integration Options">
+  You can still accept payments via card on mobile if you're not using a WebView. All channels are available directly on the <Link to="/payments/payment-channels/">API</Link> and can be integrated into your application.
+</Callout>
+
+
+## Generating the checkout URL
+The first step in the integration is to initialize the transaction to get a checkout URL.
+
+When a customer clicks the payment action button, initialize a transaction by making a POST request from your server, to our API. Pass the email, amount, and any other optional parameters to the <ApiLink title="Initialize Transaction" path="transaction-initialize" /> endpoint.
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/accept-payment/redirect-backend.js"  />
+
+## Displaying Checkout in Your WebView
+If the API call is successful, Paystack will return an authorization URL in the response. This URL should be returned to the frontend application, and loaded in the Webview widget. See the sample code below:
+
+<Tabs links={{dart: "Flutter", js: "React Native", kotlin: "Kotlin", swift: "Swift"}} filepath="/guides/checkout_webview/initialize_webview.js" />
+
+<Callout type="info" title="Enable JavaScript on WebView Widget">
+  Javascript needs to be enabled in the WebView for the checkout to load properly.
+</Callout>
+
+<Callout type="warning" title="iOS Deprecation Notice">
+  <p>UIWebView has been deprecated in iOS 12.0 so for this guide we will use WKWebView.</p>
+  <p>We assume you have WKWebView in your storyboard in the view controller in which you want to show the checkout.</p>
+</Callout>
+
+Once the checkout is loaded in the WebView, you'll need to listen for customer actions. That is, you'll want to know when the customer completes the payment or closes the checkout page. This can be done by listening for URL redirects in the WebView widget. 
+
+## Handling WebView Redirects
+<Callout type="info" title="Allow Redirect">
+  Redirects should be allowed in the WebView widget to allow for bank and 3DS authorization. If the WebView blocks redirects, the customer will not be able to complete the transaction.
+</Callout>
+
+When customers complete the payment successfully, they are redirected to the callback URL set in your Paystack dashboard. You can override this, however, by passing a `callback_url` when initializing the transaction. This will override the callback URL set on your dashboard, and the customer will be redirected there instead. The WebView widget should now look like this
+
+<Tabs links={{dart: "Flutter", js: "React Native", kotlin: "Kotlin", swift: "Swift"}} filepath="/guides/checkout_webview/handling_redirect.js" />
+
+If you have webhooks implemented, a `charge.success` event will be sent to your webhook URL, and it's recommended you use this to deliver value to the customer in your backend. 
+
+In your frontend, after detecting the WebView redirect to the callback URL, this means the transaction is successful. You can confirm the status by calling the <ApiLink title="Verify Transaction" path="transaction-verify" />, and then you can programmatically close the WebView widget and show the customer a transaction confirmation page in your app. This is handled in the `verifyTransaction()` method.  
+
+## Handling 3DS properly
+For card transactions that require 3DS authentication, when the customer completes the authorization, they're redirected to `https://standard.paystack.co/close`. Automatically, when the URL hits `https://standard.paystack.co/close`, it should close the page. This is what happens on a web browser. 
+
+With WebViews however, the page doesn't close automatically. This is because the Javascript function `window.close()`, which closes the page in a browser window, won't work on a WebView. WebViews are native widgets and the `window.close()` method can only close windows opened by using the `window.open()` method. The workaround is to have your WebView listen for when the URL has been redirected to  `https://standard.paystack.co/close` and then continue processing as usual by checking the callback function and any other process.
+
+<Tabs links={{dart: "Flutter", js: "React Native", kotlin: "Kotlin", swift: "Swift"}} filepath="/guides/checkout_webview/handling_3ds.js" />

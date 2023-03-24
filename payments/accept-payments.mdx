@@ -1,0 +1,330 @@
+---
+title: Accept Payments 
+date: 2019-01-24
+published: true
+---
+
+<header>
+	<h1>Accept Payments</h1>
+	<Callout type="summary" title="Helpful Tip">
+  	To accept a payment, create a transaction using our API, our client Javascript library, Popup JS, or our SDKs. Every transaction includes a link that can be used to complete payment.
+	</Callout>
+</header>
+
+
+## Popup
+
+Paystack Popup provides a simple and convenient payment flow for web. It can be integrated in five easy steps, making it the easiest way to start accepting payments. See demo of the payment methods on the <a href="https://paystack.com/demo/checkout" target="_blank" rel="noopener noreferrer">checkout here</a>.
+
+
+### Collect customer information
+
+To initialize the transaction, you'll need to pass information such as email, first name, last name amount, transaction reference, etc. Email and amount are required. You can also pass any other additional information in the `metadata` object field. Here is the full list of parameters you can pass:
+
+<table>
+  <thead>
+    <tr>
+      <th>Param</th>
+      <th>Required?</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>key</td>
+      <td>Yes</td>
+      <td>Your public key from Paystack. Use test key for test mode and live key for live mode</td>
+    </tr>
+    <tr>
+      <td>email</td>
+      <td>Yes</td>
+      <td>Email address of customer</td>
+    </tr>
+    <tr>
+      <td>amount</td>
+      <td>Yes</td>
+      <td>Amount (in the lowest currency value - kobo, pesewas or cent) you are debiting customer. Do not pass this if creating subscriptions.</td>
+    </tr>
+    <tr>
+      <td>ref</td>
+      <td>No</td>
+      <td>Unique case sensitive transaction reference. Only -,., =and alphanumeric characters allowed. If you do not pass this parameter, Paystack will generate a unique reference for you.</td>
+    </tr>
+    <tr>
+      <td>currency</td>
+      <td>No</td>
+      <td>Currency charge should be performed in. Allowed values are: <code>NGN</code>, <code>GHS</code>, <code>ZAR</code> or <code>USD</code> It defaults to your integration currency.</td>
+    </tr>
+    <tr>
+      <td>channels</td>
+      <td>No</td>
+      <td>An array of payment channels to control what channels you want to make available to the user to make a payment with. Available channels include; <code>['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer']</code> </td>
+    </tr>
+    <tr>
+      <td>metadata</td>
+      <td>No</td>
+      <td>Object containing any extra information you want recorded with the transaction. Fields within the <code>custom_field</code> object will show up on merchant receipt and within the transaction information on the Paystack Dashboard.</td>
+    </tr>
+    <tr>
+      <td>label</td>
+      <td>No</td>
+      <td>String that replaces customer email as shown on the checkout form</td>
+    </tr>
+    <tr>
+      <td>callback</td>
+      <td>No</td>
+      <td>Function that runs when payment is successful. This should ideally be a script that uses the verify endpoint on the Paystack API to check the status of the transaction.</td>
+    </tr>
+    <tr>
+      <td>onClose</td>
+      <td>No</td>
+      <td>Javascript function that is called if the customer closes the payment window instead of making a payment.</td>
+    </tr>
+    <tr>
+      <td>onBankTransferConfirmationPending</td>
+      <td>No</td>
+      <td>Javascript function that is called if the customer clicks on <code> Close Checkout </code> before we receive their bank transfer. <code> (This only applies to Pay-with-Transfer transactions) </code> </td>
+    </tr>
+    <tr>
+      <th colspan="3">For single <Link to="/payments/split-payments">split payments</Link></th>
+    </tr>
+    <tr>
+      <td>subaccount</td>
+      <td>Yes</td>
+      <td>The code for the subaccount that owns the payment. e.g. <code>ACCT_8f4s1eq7ml6rlzj</code></td>
+    </tr>
+    <tr>
+      <td>transaction_charge</td>
+      <td>No</td>
+      <td>A flat fee to charge the subaccount for this transaction (in kobo, pesewas or cents). This overrides the split percentage set when the subaccount was created. Ideally, you will need to use this if you are splitting in flat rates (since subaccount creation only allows for percentage split).</td>
+    </tr>
+    <tr>
+      <td>bearer</td>
+      <td>No</td>
+      <td>Decide who will bear Paystack transaction charges between <code>account</code> and <code>subaccount</code>. Defaults to <code>account</code>.</td>
+    </tr>
+    <tr>
+      <th colspan="3">For <Link to="/payments/multi-split-payments">multi-split payments</Link></th>
+    </tr>
+    <tr>
+      <td>split_code</td>
+      <td>Yes</td>
+      <td>The split code of the transaction split. e.g. <code>SPL_98WF13Eb3w</code></td>
+    </tr>
+    <tr>
+      <th colspan="3">For <Link to="/payments/subscriptions">subscriptions</Link></th>
+    </tr>
+    <tr>
+      <td>plan</td>
+      <td>Yes</td>
+      <td>Plan code generated from creating a plan. This makes the payment become a subscription payment.</td>
+    </tr>
+    <tr>
+      <td>quantity</td>
+      <td>No</td>
+      <td>Used to apply a multiple to the amount returned by the plan code above.</td>
+    </tr>
+  </tbody>
+</table> 
+
+The customer information can be retrieved from your database if you already have it stored, or from a form like in the example below:
+
+<Tabs links={{html: "HTML", js: "Javascript"}} filepath="/payments/overview/popup.js" />
+
+In this sample, notice how:
+<OrderedList items={[
+  <span>The Paystack inline javascript is included using a <code>script</code> tag. This is how you import Paystack into your code.</span>,
+  <span>The amount here can be hardcoded if you want to charge a specific amount.</span>,
+  <span>The <code>Pay</code> button has been tied to an <code>onClick</code> function called <code>payWithPaystack</code>. This is the action that causes the Paystack popup to load.</span>,
+  ]} 
+/>
+
+<Callout type="info" title="Helpful Tip">
+  If you don't collect email addresses from your customer, you can generate an email address using the information you have alongside your website url. E.g, if you only collect phone numbers from your customers, you can create email addresses like <strong>080300000@mybusiness.com.</strong>
+</Callout>
+
+
+### Initialize transaction
+
+When you have all the details needed to initiate the transaction, the next step is to tie them to the javascript function that passes them to Paystack and displays the checkout popup modal.
+
+<Tabs links={{js: "Javascript"}} filepath="/payments/accept-payment/initialize.js" />
+<strong>Important notes</strong>
+<OrderedList items={[
+  <span>The <code>key</code> field here takes your Paystack <strong>_public_</strong> key.</span>,
+  <span>The <code>amount</code> field has to be converted to the lowest currency unit by multiplying the value by <code>100</code>. So if you wanted to charge <strong>N50</strong> or <strong>$50</strong> or <strong>GHS50</strong>, you have to multiply <strong>50 * 100</strong> and pass <strong>5000</strong> in the amount field.</span>,
+	<span>It's ideal to generate a unique <code>reference</code> from your system for every transaction to avoid duplicate attempts.</span>,
+	<span>The <code>callback</code> method is called when payment has been completed successfully on the Paystack checkout. See the next section to see for how to handle the callback.</span>,
+	<span>the <code>onClose</code> method is called if the user closes the modal without completing payment.</span>
+  ]} 
+/>
+
+### Handle the callback method.
+
+The callback method is fired when the transaction is successful. This is where you include any action you want to perform when the transaction is successful.
+
+The recommended next step here is to <Link to="/payments/verify-payments">verify the transaction</Link> to confirm the status.
+
+<Callout type="info" title="Helpful Tip">
+  To verify the transaction, you have to set up a route or page on your server that you pass the transaction reference to. Then from your server, you call the Paystack verify endpoint to confirm the status of the transaction, and the response is returned to your frontend.
+</Callout>
+
+There are 2 ways you can call your server from the callback function
+
+1. Make an AJAX request to the endpoint on your server that handles the transaction verification
+
+<Tabs links={{js: "Javascript"}} filepath="/payments/accept-payment/callback-1.js" />
+
+2.	Redirect to the server URL by setting a `window.location` to the URL where the verification endpoint is set on your server.
+
+<Tabs links={{js: "Javascript"}} filepath="/payments/accept-payment/callback-2.js" />
+
+<Callout type="danger" title="Warning">
+  Never call the Paystack API directly from your frontend to avoid exposing your secret key on the frontend. All requests to the Paystack API should be initiated from your server, and your frontend gets the response from your server.
+</Callout>
+
+### Verify the Transaction
+
+After payment is made, the next step is to verify the transaction. Here's how to  <Link to="/payments/verify-payments">verify transactions with Paystack</Link>.
+
+### Handle Webhook
+
+When a payment is successful, Paystack sends a `charge.success` webhook event to your webhook URL. You can <Link to="/payments/webhooks">learn more here</Link>.
+
+
+## Redirect
+
+Here, you call the <ApiLink title="Initialize Transaction" path="transaction-initialize" /> from your server to generate a checkout link, then redirect your users to the link so they can pay. After payment is made, the users are returned to your website at the `callback_url`
+
+
+<Callout type="warning" title="Warning">
+	Confirm that your server can conclude a TLSv1.2 connection to Paystack's servers. Most up-to-date software have this capability. Contact your service provider for guidance if you have any SSL errors.
+</Callout>
+
+### Collect customer information
+
+To initialize the transaction, you'll need to pass information such as email, first name, last name amount, transaction reference, etc. Email and amount are required. You can also pass any other additional information in the `metadata` object field.
+
+The customer information can be retrieved from your database, session or cookie if you already have it stored, or from a form like in the example below.
+<Tabs links={{html: "HTML"}} filepath="/payments/accept-payment/redirect-form.js" />
+
+### Initialize transaction
+
+When a customer clicks the payment action button, initialize a transaction by making a POST request to our API. Pass the email, amount and any other parameters to the <ApiLink title="Initialize Transaction" path="transaction-initialize" /> endpoint.
+
+If the API call is successful, we will return an authorization URL which you will redirect to for the customer to input their payment information to complete the transaction.
+
+
+**Important notes**
+<OrderedList items={[
+  <span>The <code>amount</code>  field has to be converted to the lowest currency unit by multiplying the value by 100. So if you wanted to charge <strong>N50</strong> or <strong>$50</strong> or <strong>GHS50</strong>, you have to multiply <code>50 * 100</code> and pass <code>5000</code> in the amount field.</span>,
+  <span>We used the <code>cart_id</code> from the form above as our transaction <code>reference</code>. You should use a unique transaction identifier from your system as your reference.</span>,
+  <span>We set the <code>callback_url</code> in the transaction_data array. If you don't do this, we'll use the one that is <a href="https://dashboard.paystack.co/#/settings/developer" target="_blank" rel="noopener noreferrer">set on your dashboard</a>. Setting it in the code allows you to be flexible with the redirect URL if you need to</span>,
+  <span>If you don't set a callback URL on the dashboard or on the code, the users will not be redirected back to your site after payment.</span>,
+  <span>You can set test callback URLs for test transactions and live callback URLs for live transactions.</span>
+  ]} 
+/>
+
+<Tabs links={{php: "PHP"}} filepath="/payments/accept-payment/redirect-backend.js" />
+
+### Verify Transaction
+
+If the transaction is successful, Paystack will redirect the user back to a `callback_url` you set. We'll append the transaction reference in the URL. In the example above, the user will be redirected to `http://your_website.com/postpayment_callback.php?reference=YOUR_REFERENCE`.
+
+So you retrieve the reference from the URL parameter and use that to call the verify endpoint to confirm the status of the transaction. Learn more about <Link to="/payments/verify-payments">verifying transactions</Link>.
+
+It's very important that you call the Verify endpoint to confirm the status of the transactions before delivering value. Just because the `callback_url` was visited doesn't prove that transaction was successful.
+
+### Handle Webhook
+
+When a payment is successful, Paystack sends a `charge.success` webhook event to webhook URL that you provide. Learn more about using <Link to="/payments/webhooks">webhooks</Link>.
+
+## Mobile SDKs
+
+You can integrate Paystack directly into your Android or iOS app using our <Link to="/libraries-and-plugins/libraries">mobile SDK</Link>. For mobile frameworks like Ionic or React Native, please <Link to="/libraries-and-plugins/libraries#community-maintained">find the libraries here</Link>.
+
+## Charge API
+The <ApiLink title="Create Charge" path="charge-create" /> endpoint allows you to pass details of any payment channel directly to Paystack, along with the transaction details (`email`, `amount`, etc). We provide a couple of <Link to="/payments/payment-channels">payment channels</Link> that you can harness based on your use case.
+
+### Use cases
+The Charge API exposes the core components powering our checkout. Developers can use these component to develop solutions that will cater to their customers specific needs. Some of these needs include:
+<OrderedList items={[
+  <span>Serving non-smartphone users. Some of your users might be using mobile phones that can't access the internet. With the charge API, you can initiate a payment request form your server and send a prompt for payment completion via phone numbers to these users.</span>,
+  <span>Harnessing mobile OS APIs for a better user experience. Some businesses offer their products via mobile apps (Android and iOS). Mobile operating systems provide a rich set of APIs that developers can take advantage of. One of such APIs allow developers to autofill an OTP in a form. There are also APIs for dialing codes. Developers can combine the charge API with the mobile OS APIs to provide a richer experience to their users. </span>
+  ]} 
+/>
+
+
+Here is a sample payload to the Charge API containing transaction details and an object for a payment instrument - in this case Mobile money:
+
+<Tabs links={{json: "JSON"}} filepath="/payments/payment-methods/mobile-money.js" />
+
+### Handling Charge API responses
+
+When you call the <ApiLink title="Create Charge" path="charge-create" /> endpoint, the response contains a `data.status` which tells you what the next step in the process. Depending on the value in the `data.status`, you may need to prompt the user for an input as indicated in the response message (like OTP or pin or date of birth), or display an action that the user needs to complete on their device - like scanning a QR code or dialling a USSD code or redirecting to a 3DSecure page. So you follow the prompt on the `data.status` until there is no more user input required, then you listen for events via <Link to="/payments/webhooks">webhooks</Link>. 
+
+
+For the steps that prompt for user input, you will be required to display a form to the user to collect the requested input and send it to the relevant endpoint as shown in the table below. For the steps that require the user to complete an action on their device, we recommend that you display a button for the user to confirm the payment after they have performed that action so that you can listen for events via <Link to="/payments/webhooks">webhooks</Link>. 
+
+Below is the list of responses you can receive from the <ApiLink title="Create Charge" path="charge-create" /> endpoint and what you should do next:
+
+<table>
+	<thead>
+		<tr>
+			<th>Value</th>
+			<th>Description</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>pending</td>
+			<td>
+				Transaction is being processed. Call Check pending charge at least 10
+				seconds after getting this status to check status
+			</td>
+		</tr>
+		<tr>
+			<td>timeout</td>
+			<td>
+				Transaction has failed. You may start a new charge after showing
+				data.message to user
+			</td>
+		</tr>
+		<tr>
+			<td>success</td>
+			<td>
+				Transaction is successful. Give value after checking to see that all is
+				in order
+			</td>
+		</tr>
+		<tr>
+			<td>send_birthday</td>
+			<td>
+				Customer's birthday is needed to complete the transaction. Show
+				data.display_text to user with an input that accepts the birthdate and
+				submit to the Submit Birthday endpoint with reference and birthday
+			</td>
+		</tr>
+		<tr>
+			<td>send_otp</td>
+			<td>
+				Paystack needs OTP from customer to complete the transaction. Show
+				data.display_text to user with an input that accepts OTP and submit the
+				OTP to the Submit OTP with reference and otp
+			</td>
+		</tr>
+		<tr>
+			<td>failed</td>
+			<td>
+				Transaction failed. No remedy for this, start a new charge after showing
+				data.messageto user
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+### Handle Webhook
+
+When a payment is successful, Paystack sends a `charge.success` webhook event to webhook URL that you provide. It is highly recommended that you use <Link to="/payments/webhooks">webhooks</Link> to confirm the payment status before delivering value to your customers.
+
+

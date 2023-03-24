@@ -1,0 +1,127 @@
+---
+title: Verify Account Number
+date: 2019-01-24
+published: true
+---
+
+<header>
+	<h1>Verify Account Number</h1>
+  <Callout type="summary" title="In a nutshell">
+    The account validation APIs allow merchants to confirm the authenticity of a customer’s account number before 
+    sending money to the customer.
+  </Callout>
+</header>
+
+## Introduction
+Before sending money to a customer, you need to ensure the customer’s account details are correct. This is to ensure you aren’t 
+sending money to the wrong person. In order to achieve this, we provide the following APIs:
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Availability</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><Link to="#resolve-account-number">Resolve Account Number</Link></td>
+      <td>Nigeria, Ghana</td>
+      <td>Used for the confirmation of personal bank accounts</td>
+    </tr>
+    <tr>
+      <td><Link to="#account-validation">Account Validation</Link></td>
+      <td>South Africa</td>
+      <td>Used for the validation of personal and business bank accounts</td>
+    </tr>
+  </tbody>
+</table>
+
+Account number verification allows you to:
+<UnorderedList items={["Confirm a customer’s bank details before creating a transfer recipient", "Automate your KYC process"]} />
+
+## Resolve Account Number
+
+<Callout type="info" title="Gentle reminder">
+  This feature is available to business in Nigeria and Ghana.
+</Callout>
+
+The <ApiLink title="Resolve Account Number" path="verification-resolve-account" /> takes the customer’s account number and bank code and returns the account details of the customer. 
+To resolve an account number, make a `GET` request to the `/bank/resolve` endpoint:
+
+<RequestResponse links={{bash: 'cURL', js: "Node", php: "PHP"}} filepath="/identity/account/resolve.js" />
+
+
+<Callout type="info" title="Pricing">
+  This endpoint is free for use.
+</Callout>
+
+## Account Validation
+<Callout type="info" title="Gentle Reminder">
+  This feature is only available to businesses in South Africa.
+</Callout>
+
+The <ApiLink title="Validate Account" path="verification-validate-account" /> allows merchant validate both personal and business accounts. It checks if the provided customer’s 
+details are correct and returns the status of the check. To validate an account, make a `POST` request to the `/bank/validate` endpoint:
+
+<RequestResponse links={{bash: 'cURL', js: "Node", php: "PHP"}} filepath="/identity/account/validate.js" />
+
+The `/bank/validate` endpoint can be used for both personal and business account validation by using the following request parameters:
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>account_name</code></td>
+      <td>String</td>
+      <td>Customer's first and last name registered with their bank</td>
+    </tr>
+    <tr>
+      <td><code>account_number</code></td>
+      <td>String</td>
+      <td>Customer’s account number</td>
+    </tr>
+    <tr>
+      <td><code>account_type</code></td>
+      <td>String</td>
+      <td>This can take one of: [ <code>personal</code>, <code>business</code> ]</td>
+    </tr>
+    <tr>
+      <td><code>bank_code</code></td>
+      <td>String</td>
+      <td>The bank code of the customer’s bank. You can fetch the bank codes by using our <ApiLink title="List Bank" path="miscellaneous-bank"/>.</td>
+    </tr>
+    <tr>
+      <td><code>country_code</code></td>
+      <td>String</td>
+      <td>The two digit ISO code of the customer’s bank</td>
+    </tr>
+    <tr>
+      <td><code>document_type</code></td>
+      <td>String</td>
+      <td>Customer’s mode of identity. This could be one of: [ <code>identityNumber</code>, 
+      <code>passportNumber</code>, <code>businessRegistrationNumber</code> ]</td>
+    </tr>
+    <tr>
+      <td><code>document_number</code></td>
+      <td>String</td>
+      <td>Customer’s mode of identity number</td>
+    </tr>
+  </tbody>
+</table>
+
+When validating a personal account number, the customer can either provide their passport or identity number. You can specify the mode of 
+identity by passing either `identityNumber` or `passportNumber` as the `document_type` parameter.
+
+For business account validation the `document_type` should be `businessRegistrationNumber`.
+
+<Callout type="info" title="Pricing">
+  This endpoint costs <strong>ZAR 3</strong> for every successful request.
+</Callout>

@@ -1,0 +1,31 @@
+---
+title: Custom Filters
+date: 2020-06-19
+published: true
+---
+
+<header>
+	<h1>Custom Filters</h1>
+	<Callout type="summary" title="In a nutshell">
+    As a Paystack merchant, you can control how a transaction is completed. Our custom filters help ensure this. Custom filters are a metadata object.
+  </Callout>
+</header>
+
+
+## Recurring (boolean)
+If you need to directly debit the customer in future, specify `recurring=true` under this object to ensure we accept only verve cards that support recurring billing. And force a bank authentication for MasterCard and VISA.
+
+
+## Banks (array)
+If you only want some particular bank(s) cards to be accepted for a transaction, specify the bank codes in the object thus: `banks: ["057","100"]` . To get the list of bank codes supported, please check this API endpoint: <ApiLink title="List Banks" path="miscellaneous-bank" />.
+
+## Card Brands (array)
+If you only want some particular card brand(s) to be accepted for a transaction, specify the brands in the object thus: `brands: ["visa","verve"]` 
+
+## Sample
+
+<Tabs links={{json: "JSON"}} filepath="/payments/custom-filters/metadata.js" />
+
+This would mean the transaction is intended to be for enrolling on a recurring billing platform. And we should only accept a visa card from Zenith (057) or Suntrust bank (100).
+
+All keys are optional.

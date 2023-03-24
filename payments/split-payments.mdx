@@ -1,0 +1,60 @@
+---
+title: Split Payments
+date: 2019-01-24
+published: true
+---
+<header>
+	<h1>Split Payments</h1>
+	<Callout type="summary" title="In a nutshell">
+   With split payments you can share your settlement for a transaction with another account
+  </Callout>
+</header>
+
+Implementing split payments involves:
+
+<OrderedList items={[
+  <Link to="/payments/split-payments#create-a-subaccount">Create a subaccount</Link>,
+  <Link to="/payments/split-payments#initialize-a-split-payment">Initialize a split payment</Link>
+  ]} 
+/>
+
+
+## Create a subaccount
+
+Subaccounts can be created via the <a href="https://dashboard.paystack.com/#/subaccounts" target="_blank" rel="noopener noreferrer">Paystack Dashboard</a> or using the <ApiLink title="create subaccount" path="subaccount-create" /> endpoint. When a subaccount is created, the `subaccount_code` is returned.
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/split-payment/create-subaccount.js" />
+
+<Callout type="warning" title="Verify Account Number">
+	Please endeavour to verify that the bank account details matches what you intended. Paystack will not be liable for payouts to the wrong bank account.
+</Callout>
+
+## Initialize a split payment
+
+Split payments can be initialized by using the <ApiLink title="Initialize Transaction" path="transaction-initialize" /> endpoint and passing the parameter `subaccount: "SUB_ACCOUNTCODE"`.
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/split-payment/initialize.js" />
+
+Split payments can be used in the following scenario:
+
+<UnorderedList items={["Shared payment between service provider and platform provider", "Split profit between different vendors", "Separate school fees in different account e.g. Tuition, Accomodation, Excursion"]} />
+
+## Flat Fee
+
+By default, payments are split by percentage. For example, if a subaccount was created with `percentage_charge: 0.2`, 20% goes to the subaccount and the rest goes to the main account. 
+
+However, you can override this default and specify a flat fee that goes into your main account. To do this, pass the `transaction_charge` key when intializing a transaction.
+
+In the snippet below, the main account gets a flat fee of `10000` and the subaccount gets the rest:
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/split-payment/flat-fee.js" />
+
+
+## Bearer of Transaction Fee
+
+By default, the Paystack charges are borne by the main account. To change this to a subaccount, pass the param `bearer: "subaccount"` while intializing a transaction.
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/split-payment/bearer.js" />
+
+<Callout type="warning" title="Invalid Split Configuration">
+	When specifying a bearer, you need to ensure that the amount that goes into the subaccount is sufficient to bear the transaction fee. If the amount is insufficient, you'll get a <code>400 Bad Request</code> error.
+</Callout>

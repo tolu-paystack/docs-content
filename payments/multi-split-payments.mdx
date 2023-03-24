@@ -1,0 +1,151 @@
+---
+title: Multi-split Payments
+date: 2019-01-24
+published: true
+---
+
+<header>
+	<h1>Multi-split Payments</h1>
+	<Callout type="summary" title="In a nutshell">
+    Multi-split enables merchants to split the settlement for a transaction across their payout account, and one or more subaccounts.
+  </Callout>
+</header>
+
+You can implement multi-split by:
+
+<OrderedList items={[
+  <Link to="/payments/multi-split-payments#creating-a-transaction-split">Creating a transaction split</Link>,
+  <Link to="/payments/multi-split-payments#using-transaction-splits-with-payments">Using transaction splits with payments</Link>
+  ]} 
+/>
+
+Merchants will be able to create and manage their transaction splits using the <ApiLink title="Transaction Splits" path="split" /> endpoints and their <a href="https://dashboard.paystack.com/#/transaction-splits" target="_blank" rel="noopener noreferrer">Paystack Dashboard</a>.
+
+## Creating a transaction split
+<Callout type="info" title="Before you begin">
+  Transaction split depends on subaccounts to work its magic. If you already have subaccounts, you can proceed. Otherwise, you'll need to <Link to="/payments/split-payments#create-a-subaccount">create a subaccount</Link> first.
+</Callout>
+
+You can create a transaction split by sending a request to the <ApiLink title="Create Split" path="split-create" /> endpoint with the following information:
+<UnorderedList items={[
+  <span>The type of split (<code>flat</code> or <code>percentage</code>)</span>,
+  <span>An array of subaccounts and their respective shares</span>
+  ]} 
+/>
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/multi-split/create-split.js" />
+
+<Callout type="warning" title="Warning">
+  <OrderedList items={[
+  <span>We don't accept decimal figures for subaccounts shares if the split type is <code>percentage</code></span>,
+  <span>The sum of the <code>percentage</code> splits should not be more than 100%</span>,
+  <span>Share amounts for <code>flat</code> splits are fractional monetary units (kobo, cents, pesewas, etc)</span>,
+  <span>The sum of the <code>flat</code> splits should not be more than the transaction amount</span>,
+  ]} 
+/>
+</Callout>
+
+Through the APIs, you can add, remove, and update the subaccounts in a Split, as well as change the active state of a Split.
+<Callout type="warning" title="Updating a Split">
+  You can't change the type of a split. Instead, you can deactivate the Split and create a new Split with a different split type.
+</Callout>
+
+## Using transaction splits with payments
+After creating a transaction split, you can make use of it when:
+
+<OrderedList items={[
+  <Link to="/payments/multi-split-payments#initializing-a-transaction">Initializing a transaction</Link>,
+  <Link to="/payments/multi-split-payments#charging-an-authorization">Charging an authorization</Link>
+  ]} 
+/>
+
+### Initializing a transaction
+You can initialize a transaction with a Transaction Split by adding a `split_code` to the payload you send to the <ApiLink title="Transaction Initialize" path="transaction-initialize" /> endpoint.
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/multi-split/initialize.js" />
+
+### Charging an authorization
+To charge an authorization with a Transaction Split, add a `split_code` to the payload you send to the <ApiLink title="Charge Authorization" path="transaction-charge-authorization" /> endpoint.
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/multi-split/charge-authorization.js" />
+
+## Dynamic Splits
+Sometimes, you can't determine a split configuration until later in the purchase flow. With dynamic splits, you can create split on the fly. This can be achieved by passing a `split` object to the <ApiLink title="Transaction Initialize" path="transaction-initialize" /> endpoint or to <Link to="/payments/accept-payments#popup">popup</Link>. The `split` object can take the following properties:
+
+<table>
+  <thead>
+    <tr>
+      <th>Param</th>
+      <th>Required?</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>type</td>
+      <td>Yes</td>
+      <td>Value can be <code>flat</code> or <code>percentage</code></td>
+    </tr>
+    <tr>
+      <td>bearer_type</td>
+      <td>Yes</td>
+      <td>Value can be <code>all</code>, <code>all-proportional</code>, <code>account</code>  or <code>subaccount</code></td>
+    </tr>
+    <tr>
+      <td>subaccounts</td>
+      <td>Yes</td>
+      <td>An array of subaccount object. e.g. <code>&#123; "subaccount": 'ACCT_', "share": 60</code> &#125;</td>
+    </tr>
+    <tr>
+      <td>bearer_subaccount</td>
+      <td>No</td>
+      <td>Subaccount code of the bearer. It should be specified if <code>bearer_type</code> is <code>subaccount</code></td>
+    </tr>
+    <tr>
+      <td>reference</td>
+      <td>No</td>
+      <td>Unique reference of the split</td>
+    </tr>
+  </tbody>
+</table>
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/payments/multi-split/dynamic.js" />
+
+## Webhooks
+For successful transactions, we'll populate a `split` parameter in the `charge.success` webhook with information on the Split:
+<Tabs links={{json: "JSON"}} filepath="/payments/multi-split/webhook.js" />
+
+## Fees on Multi-split
+By default, the main account bears the Paystack transaction fees. However, you can change this by setting the `bearer_type` to either `account`, `all` or `subaccount`.
+
+<table>
+  <thead>
+    <tr>
+      <th>Bearer Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>all</td>
+      <td> Fees will be shared equally by the main account and all subaccounts.</td>
+    </tr>
+    <tr>
+      <td>all-proportional</td>
+      <td> Fees will be charged according to the share of the main account and subaccounts.</td>
+    </tr>
+    <tr>
+      <td>account</td>
+      <td> Fees will be charged to the main account only.</td>
+    </tr>
+    <tr>
+      <td>subaccount</td>
+      <td> Only the subaccount set in the <code>bearer_subaccount</code> will be charged</td>
+    </tr>
+  </tbody>
+</table>
+
+<Callout type="info" title="Bearer Subaccount">
+A required parameter when the <code>bearer_type</code> is set to <code>subaccount</code>. 
+The value of <code>bearer_subaccount</code> must be a subaccount code that's in the split group.
+</Callout>

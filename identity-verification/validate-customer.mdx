@@ -1,0 +1,57 @@
+---
+title: Validate Customer
+date: 2020-09-03
+published: true
+---
+
+<header>
+	<h1>Validate Customer</h1>
+  <p>Learn how to validate identification details for your customers</p>
+</header>
+
+<Callout type="info" title="Availability">
+  This is only required if you're using the <Link to="/payments/dedicated-virtual-accounts">Dedicated Virtual Accounts</Link> feature and your business falls under any of these categories - Betting, Financial services, and General Services.
+</Callout>
+
+## Introduction
+
+The customer validation endpoint is used to verify identification details provided by your customers. You can validate a customer by sending a <code>POST</code> request to the <ApiLink title="Validate Customer" path="customer-validate" /> endpoint.
+
+## Bank Account Validation
+Bank account validation requires that you provide the customer's BVN and a bank account connected to that BVN. 
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/identity/validate-customer/request-2.0.js" />
+
+### Testing
+Customers can only be validated with live keys. However, for testing purposes during your integration, you can make make use of this credential with your test key:
+<Tabs links={{json: "Test Credential"}} filepath="/identity/validate-customer/test-cred-2.0.js" />
+
+
+## Listen for verification status
+The verification of the details provided happens asynchronously, and we will send a <code>customeridentification.success</code> or <code>customeridentification.failed</code> event to your webhook URL when the verification is complete.
+
+<Callout type="info" title="Prerequisite">
+  You need a basic knowledge of <Link to="/payments/webhooks">webhooks</Link> before proceeding with this section.
+</Callout>
+
+<TabsMulti language="json" links={{ success: "Customer Identification Success", failed: "Customer Identification Failed" }} filepath="/identity/validate-customer/webhook.js" />
+
+When a customer validation fails, we return the cause of the failure in the `data.reason` parameter. We return the following reasons for a failed customer validation:
+<OrderedList items={[
+    "Account could not be resolved. Please try again",
+    "Account name or BVN is incorrect",
+    "Account number or BVN is incorrect"
+  ]} 
+/>
+
+<Callout type="info" title="A validated customer's name cannot be updated">
+ When a customer is validated successfully, the customer's <code>first_name</code> and <code>last_name</code> are automatically updated to correspond with the name on their BVN. 
+Once this is set, you'll no longer be able to update the customer's name using the  <ApiLink title="Update Customer" path="customer-update" /> and the customer's name can only be updated by a re-validation.
+</Callout>
+
+## Reasons to validate a customer
+<OrderedList items={[
+  <span>Local regulations require that customer information is validated before creating account numbers on their behalf.</span>,
+  <span>It allows us name the bank account using the name registered to the provided BVN.</span>
+  ]} 
+/>

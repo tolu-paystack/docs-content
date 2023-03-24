@@ -1,0 +1,210 @@
+---
+title: Apple Pay
+date: 2021-08-09
+published: true
+---
+
+<header>
+	<h1>Apple Pay</h1>
+	<Callout type="summary" title="In a nutshell">
+    Allow customers to securely make payments using Apple Pay on iOS and Safari.
+  </Callout>
+</header>
+
+
+## Activating Apple Pay
+You can configure the Apple Pay channel for your web application  on the Paystack Dashboard. 
+To enable Apple Pay on your integration, <a href="https://dashboard.paystack.com/#/settings/preferences" target="_blank" rel="noopener noreferrer">go to the Preferences page</a> on the Paystack dashboard and check the `Apple Pay` option:
+
+
+<img alt="Image of the Paystack preferences page showing the checkbox to activate Apple Pay" src="../../assets/images/apple-pay/activate_apple_pay.png" />
+
+Once checked, you'll be prompted to enable Apple Pay by accepting the Apple Pay Platform Web Merchant Terms and Conditions. 
+Clicking on the `Enable Apple Pay` button means you've read and accepted the Apple Pay Terms and Conditions:
+
+<img alt="Image of modal to review Apple Pay terms and conditions before activating Apple Pay" src="../../assets/images/apple-pay/review_tc.png" />
+
+<Callout type="info" title="Commerce Suite">
+  If you make use of our Invoices, Payment Pages or Storefronts, you can now start accepting payments through Apple Pay. Merchants with a custom web application can proceed to the next section to set up Apple Pay for their application.
+</Callout>
+
+## Setting up for your web application
+Every Apple Pay request needs to be associated with a top-level domain or subdomain. To begin accepting payment with Apple Pay, you need to:
+
+<OrderedList items={[
+  <Link to="/payments/apple-pay#register-your-domain">Register your domain</Link>,
+  <Link to="/payments/apple-pay#host-your-domain-verification-file">Host your domain verification file</Link>,
+  <Link to="/payments/apple-pay#verify-your-domain">Verify your domain</Link>
+  ]} 
+/>
+
+### Register your domain
+On the Paystack Dashboard:
+1. <span>Click on the <code>Apple Pay</code> tab on the Settings page</span>
+2. <div>
+    <span>Under the Web Domains section, click on <code>Add new domain</code> button</span>
+    <img alt="Image of the Paystack Apple Pay page, showinfg where to add a domain name" src="../../assets/images/apple-pay/add_domain.png" />
+  </div>
+3. <div>
+    <span>On the modal, add your domain name and download the domain verification file. The verification file will be required in the next step.</span>
+    <img alt="Image of the domain verification modal showing a domain name being registeered " src="../../assets/images/apple-pay/filled_domain.png" />
+  </div>
+
+<Callout type="info" title="Domain Registration via API">
+  If you would rather register your domain via API, kindly check the <ApiLink title="Apple Pay" path="apple-pay" /> endpoint for more details.
+</Callout>
+
+
+### Host your domain verification file
+For each top-level domain and/or subdomain registered, you need to host a verification file in the `.well-known` folder in your website's root directory.
+
+For example, if you registered `paystack.com`, then the verification file should reside in: `https://paystack.com/.well-known`.  Likewise, if you registered `music.paystack.com`, the verification file should reside in: `https://music.paystack.com/.well-known`.
+
+Hosting the verification file is a two-step process:
+1. Create a `.well-known` folder in your website's root directory
+2. Add the verification file previously downloaded to this folder
+
+<img alt="Image of an application folder showing the well known folder used to host the domain verification file" src="../../assets/images/apple-pay/create_well_known.png" />
+
+<Callout type="info" title="Domain Verification File Content-Type">
+  Kindly ensure the domain verification file is returned with a <code>content-type</code> of <code>application/text</code>. Using a different <code>content-type</code> could cause your customer's payment to fail.
+</Callout>
+
+### Verify your domain
+You should now go back to the dashboard to verify your domain. On the `Verify your domain` modal, click the `Verify Domain` button to complete your domain registration. If all goes well, you should get a domain verified message like this:
+
+<img alt="Image of a successful domain verification for Apple Pay" src="../../assets/images/apple-pay/domain_verified.png" />
+
+## Setting up on Popup
+<Callout type="info" title="Compatibility">
+  Apple Pay works on version 2 of our InlineJS only. If you are using version 1 <Link to="/guides/migrating-from-inlinejs-v1-to-v2">kindly follow this migration guide</Link> before proceeding.
+</Callout>
+
+There are two ways to set up Apple Pay in your frontend application:
+
+1. Mounting a payment request button
+2. Using a pre-checkout modal
+
+### Mounting a payment request button
+
+This method allows you to position the Apple Pay button in line with your design.  It's a flexible method with a two-step process:
+
+1. Create a container
+2. Set up the payment request
+
+#### Create a container
+
+This process involves adding the HTML tags that will house the Apple Pay button as well as the button to load other payment options:
+```html
+<!-- Payment request buttons, styles and event listeners will be injected to this div -->
+<div id="paystack-apple-pay"></div>
+<button id="paystack-other-channels">More payment options</button>
+```
+
+You should use a `div` tag with a unique `id` for the container of the Apple Pay button. `paystack-apple-pay` is used in the snippet above, however, you can use any name you prefer. This `id` will be used to configure and load the Apple Pay button.
+
+#### Set up the payment request
+
+In order to configure the Apple Pay button, you need to pass the container `id` and the `id` for the other channels in the `paymentRequest()` method:
+
+```js
+const paystackPop = new PaystackPop();
+
+await paystackPop.paymentRequest({
+  key: 'pk_domain_xxxxx', // Replace with merchant public key
+  email: 'CUSTOMER_EMAIL',
+  amount: amount * 100, // the amount value is multiplied by 100 to convert to the lowest currency unit
+  currency: 'NGN', // Use NGN for Naira or USD for US Dollars
+  ref: 'YOUR_REFERENCE', // Replace with a reference you generated
+  container: 'paystack-apple-pay', // ID of div to mount payment button elements
+  loadPaystackCheckButton: 'paystack-other-channels', // ID of button to trigger opening Paystack checkout. It is optional
+  style: { 
+    theme: 'dark' // 'light' or 'dark'
+    applePay: { 
+      margin: '10px',
+      padding: '10px',
+      width: '100%',
+      borderRadius: '5px',
+      type: 'pay', // Default value is 'pay'. See other apple pay button types here https://developer.apple.com/documentation/apple_pay_on_the_web/displaying_apple_pay_buttons_using_css
+      locale: 'en'
+    } 
+  }, // custom styles for button elements
+  onSuccess(response) {
+    // do stuff
+  },
+  onError() {
+    // do stuff
+  },
+  onCancel() {
+    // do stuff
+  }.
+  onElementsMount(elements) { // { applePay: true } or null
+    
+  }
+});
+```
+
+
+### Using a pre-checkout modal
+
+This method doesn't require any additional HTML elements as we do the heavy lifting for you. You can simply tie your payment button to the `checkout()` method:
+
+```js
+async funtion payWithPaystack() {
+
+	const paystackPop = new PaystackPop();
+
+	await paystackPop.checkout({
+		key: 'pk_domain_xxxxxx',
+		email: 'test@gamil.com',
+		amount: 10000
+	});
+
+}
+```
+
+The checkout method checks if the user is on an iOS device or the Safari browser. If the user is on an Apple device, we load a pre-checkout modal that contains the Apple Pay button and a button to load other payment options. Otherwise, we simply load the checkout:
+
+<img alt="Image of a pre-checkout modal on an iPhone" src="../../assets/images/apple-pay/pre_checkout.png" />
+
+## Troubleshooting
+If you experience any issues with your Apple Pay integration, kindly ensure there wasn't an oversight during set up:
+
+<UnorderedList items={[
+    "Your server must serve all requests via HTTPS",
+    <span>You've <Link to="#register-your-domain">registered and verified your domain</Link> on the dashboard</span>,
+    <span>You've hosted your domain verification file in the <code>.well-known</code> folder in your website's root directory</span>,
+    <span>If your server requires an external server whitelisted before communication can be initiated, you will need to <a href="https://developer.apple.com/documentation/apple_pay_on_the_web/setting_up_your_server" target="_blank" rel="noopener noreferrer">whitelist Apple's IP addresses</a>.</span>
+  ]} 
+/>
+
+If all checks out and you are still having issues with your Apple Pay integration, here are some possible errors and resolution you can try out:
+
+<table>
+	<thead>
+		<tr>
+			<th>Error</th>
+			<th>Resolution</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Apple Pay Session could not be initiated</td>
+			<td>
+				We couldn’t initiate a web session for the payment. Kindly try again.
+			</td>
+		</tr>
+		<tr>
+			<td>Apple Pay Transaction not allowed because merchant is not enabled for international payments.</td>
+			<td>
+				You need to check if your <a href="https://support.paystack.com/hc/en-us/articles/360010744840-Is-my-business-eligible-for-international-payments-" target="_blank" rel="noopener noreferrer">business is eligible for international payment</a>. If your business is eligible, kindly <a href="https://support.paystack.com/hc/en-us/articles/360009882000-How-do-I-turn-on-international-payments-on-Paystack-" target="_blank" rel="noopener noreferrer">follow this guide to activate international payment</a>.
+			</td>
+		</tr>
+		<tr>
+			<td>Merchant's Category not supported for Apple Pay transactions.</td>
+			<td>
+				For compliance reasons, only specific business categories are allowed to use Apple Pay.
+			</td>
+		</tr>
+	</tbody>
+</table>

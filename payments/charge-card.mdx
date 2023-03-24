@@ -1,0 +1,118 @@
+---
+title: Charge Card
+date: 2020-06-19
+published: true
+---
+
+<header>
+	<h1>Charge Card</h1>
+  <p>
+    Learn how to charge a card directly from your backend 
+  </p>
+</header>
+
+<Callout type="danger" title="PCI Compliance">
+  We strongly discourage passing card information directly to the API as it means your integration is directly handling card information. Even if you do not store any cardholder data, we only help simplify PCI compliance for you if you have integrated with <Link to="/payments/accept-payments#popup">Popup</Link>, <Link to="/payments/accept-payments/#redirect">Redirect</Link> or our <Link to="/libraries-and-plugins/libraries">Mobile SDKs</Link>.
+</Callout>
+
+
+## What is PCI compliance?
+
+Anyone involved with the processing, transmission, or storage of card data must comply with the **Payment Card Industry Data Security Standards (PCI DSS)**. Paystack has been audited by an independent PCI Qualified Security Assessor (QSA) and is certified as a <a href="https://paystack.com/compliance" target="_blank" rel="noopener noreferrer">PCI Level 1 Service Provider</a>. This is the most stringent level of certification available in the payments industry.
+
+PCI compliance is a shared responsibility and applies to both Paystack and your business. When accepting payments, you must do so in a PCI compliant manner. The simplest way for you to be PCI compliant is to never see (or have access to) card data at all. Paystack makes this easy for you as we can do the heavy lifting to protect your customers’ card information. You can simplify your PCI compliance as long as you:
+
+<OrderedList items={[
+  <span>Use one of our recommended payments integrations to collect payment information, which is securely transmitted directly to Paystack without it passing through your servers</span>,
+  <span>Serve your payment pages securely using Transport Layer Security (TLS) so that they make use of HTTPS</span>
+  ]} 
+/>
+
+## Charging a card
+
+Make a POST request to the <ApiLink title="Charge" path="charge" /> endpoint with the transaction data as the body of the request in JSON format
+
+<Tabs links={{json: "JSON"}} filepath="/payments/charge/request.js" />
+
+When a charge is made, the default status is `pending` as the payment is being processed in the background. The status can then change to several different status before a `success` or a `failed` status.
+
+Here are the possible status values:
+
+<table>
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>pending</td>
+      <td>Transaction is being processed. Call <ApiLink title="Check pending charge" path="charge-check" /> at least 10 seconds after getting this status to check status</td>
+    </tr>
+    <tr>
+      <td>timeout</td>
+      <td>Transaction has failed. You may start a new charge after showing data.message to user.</td>
+    </tr>
+    <tr>
+      <td>success</td>
+      <td>Transaction is successful. Give value after checking to see that all is in order.</td>
+    </tr>
+    <tr>
+      <td>send_pin</td>
+      <td>
+        Customer's PIN is needed to complete the transaction. Show <code>data.display_text</code> to user with input for PIN and call <ApiLink title="Submit PIN" path="charge-submit-pin" /> endpoint with reference and PIN</td>
+    </tr>
+    <tr>
+      <td>send_phone</td>
+      <td>
+        Customer's phone number is needed to complete the transaction. Show <code>data.display_text</code> to user with input for phone and call <ApiLink title="Submit Phone" path="charge-submit-phone" /> endpoint with reference and phone</td>
+    </tr>
+    <tr>
+      <td>send_birthday</td>
+      <td>Customer's birthday is needed to complete the transaction. Show <code>data.display_text</code> to user with an input that accepts the birthdate and submit to the <ApiLink title="Submit Birthday" path="charge-submit-birthday" /> endpoint with reference and birthday.</td>
+    </tr>
+    <tr>
+      <td>send_otp</td>
+      <td>
+          Customer's OTP is needed to complete the transaction. Show <code>data.display_text</code> to user with an input that accepts OTP and submit the OTP to the <ApiLink title="Submit OTP" path="charge-submit-otp" /> with reference and otp.
+      </td>
+    </tr>
+    <tr>
+      <td>open_url</td>
+      <td>
+          Response will include <code>data.url</code>. You should open the <code>data.url</code> in user’s browser. You can specify an optional URL to which we should redirect the user after the attempt is complete by adding <code>redirect_to=[url]</code> as a GET query parameter to the <ApiLink title="Check Pending Charge" path="charge-check" /> endpoint at least 5 seconds after user closes browser page or after 5 minutes, whichever comes first.
+      </td>
+    </tr>
+    <tr>
+      <td>pay_offline</td>
+      <td>
+          Response will include <code>data.ussd_code</code>. You should prompt <code>data.ussd_code</code> as a phone string to user. User needs to dial the provided USSD code to complete the transaction offline
+      </td>
+    </tr>
+    <tr>
+      <td>failed</td>
+      <td>
+          Transaction failed. No remedy for this, start a new charge after showing <code>data.message</code> to user
+      </td>
+    </tr>
+    <tr>
+      <td>false</td>
+      <td>
+        Response will include <code>message</code>. You should log the message so you may debug your logic.
+      </td>
+    </tr>
+  </tbody>
+</table> 
+<Callout type="info" title="Address Verification System (send_address)">
+  AVS is only supported for cards issued in the UK, USA, Canada, Australia and Netherlands. To get the list of states for a country for address verification call the <ApiLink title="List States (AVS)" path="miscellaneous-avs-states" /> endpoint. The country code is gotten after the charge request and is used as a query parameter.
+</Callout>
+
+<Callout type="warning" title="Request timeout">
+  Aside a failed or false response, if other requests timeout or give an error, please wait at least 10 seconds, then call <ApiLink title="Check Pending Charge" path="charge-check" />.
+</Callout>
+
+
+
+
+

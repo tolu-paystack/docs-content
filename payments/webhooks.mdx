@@ -1,0 +1,232 @@
+---
+title: Webhooks
+date: 2019-01-24
+published: true
+---
+
+<header>
+	<h1>Webhooks</h1>
+	<Callout type="summary" title="">
+		Webhooks allow you to set up a notification system that can be used to receive updates on certain requests made to the Paystack API.
+	</Callout>
+</header>
+
+
+## Introduction
+
+Generally, when you make a request to an API endpoint, you expect to get a near-immediate response. However, some requests may take a long time to process, which can lead to timeout errors. In order to prevent a timeout error, a pending response is returned. Since your records need to be updated with the final state of the request, you need to either:
+
+1. Make a request for an update (popularly known as polling) or, 
+2. Listen to events by using a webhook URL.
+
+<Callout type="info" title="Helpful Tip">
+  We recommend that you use webhook to provide value to your customers over using callbacks or polling.  With callbacks, we  don't have control over what happens on the customer's end. Neither do you. Callbacks can fail if the network connection on a customer's device fails or is weak or if the device goes off after a transaction.
+</Callout>
+
+## Polling vs Webhooks
+
+<img alt="Image of a pre-checkout modal on an iPhone" src="../../assets/images/webhooks/polling_webhooks.png" />
+
+Polling requires making a `GET` request at regular intervals to get the final status of a request. For example, when a customer makes a payment for a transaction, you keep making a request for the transaction status until you get a successful transaction status.
+
+With webhooks, the resource server, Paystack in this case, sends updates to your server when the status of your request changes. The change in status of a request is known as an **event**. You’ll typically listen to these events on a `POST` endpoint called your **webhook URL**.
+
+The table below highlights some differences between polling and webhooks:
+<table>
+	<thead>
+		<tr>
+			<th></th>
+			<th>Polling</th>
+			<th>Webhooks</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Mode of update</td>
+			<td>Manual</td>
+			<td>Automatic</td>
+		</tr>
+		<tr>
+			<td>Rate limiting</td>
+			<td>Yes</td>
+			<td>No</td>
+		</tr>
+		<tr>
+			<td>Impacted by scaling</td>
+			<td>Yes</td>
+			<td>No</td>
+		</tr>
+	</tbody>
+</table>
+
+
+## Create a webhook URL
+
+A webhook URL is simply a `POST` endpoint that a resource server sends updates to. The URL needs to parse a JSON request and return a `200 OK`:
+
+<Tabs links={{js: "Node", php: "PHP"}} filepath="/payments/webhooks/receiving-events.js"  />
+
+When your webhook URL receives an event, it needs to parse and acknowledge the event. Acknowledging an event means returning a `200 OK` in the HTTP header. Without a `200 OK` in the response header, we’ll keep sending events for the next 72 hours:
+
+<UnorderedList items={[
+    "In live mode, we’ll send webhooks every 3 minutes for the first 4 tries, then we switch to sending hourly for the next 72 hours",
+    "In test mode, we send webhooks hourly for the next 72 hours",
+  ]} 
+/>
+
+<Callout type="warning" title="Avoid long-running tasks">
+  If you have long-running tasks in your webhook function, you should acknowledge the event before executing the long-running tasks. Long-running tasks will lead to a request timeout and an automatic error response from your server. Without a 200 OK response, we retry as described in the paragraph above.
+</Callout>
+
+## Verify event origin
+Since your webhook URL is publicly available, you need to verify that events originate from Paystack and not a bad actor. There are two ways to ensure events to your webhook URL are from Paystack:
+
+1. Signature validation
+2. IP whitelisting
+
+### Signature validation
+Events sent from Paystack carry the `x-paystack-signature header`. The value of this header is a `HMAC SHA512` signature of the event payload signed using your secret key. Verifying the header signature should be done before processing the event:
+
+<RequestResponse links={{js: "Node", php: "PHP", java: "Java", csharp: "C#"}} filepath="/payments/webhooks/verifying-transactions.js" />
+
+### IP whitelisting
+With this method, you only allow certain IP addresses to access your webhook URL while blocking out others. Paystack will only send webhooks from the following IP addresses:
+
+1. **52.31.139.75**
+2. **52.49.173.169**
+3. **52.214.14.220**
+
+You should whitelist these IP addresses and consider requests from other IP addresses a counterfeit.
+
+<Callout type="info" title="Whitelisting is domain independent">
+  The IP addresses listed above are applicable to both test and live environments. You can whitelist them in your staging and production environments.
+</Callout>
+
+
+## Go live checklist
+Now that you’ve successfully created your webhook URL, here are some ways to ensure you get a delightful experience:
+1. Add the webhook URL on your <a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" rel="noopener noreferrer">Paystack dashboard</a>
+2. Ensure your webhook URL is publicly available (localhost URLs cannot receive events)
+3. If using `.htaccess` kindly remember to add the trailing `/` to the URL
+4. Test your webhook to ensure you’re getting the JSON body and returning a `200 OK` HTTP response
+5. If your webhook function has long-running tasks, you should first acknowledge receiving the webhook by returning a `200 OK` before proceeding with the long-running tasks
+6. If we don’t get a `200 OK` HTTP response from your webhooks, we flagged it as a failed attempt
+7. In the live mode, failed attempts are retried every 3 minutes for the first 4 tries, then we switch to sending hourly for the next 72 hours
+8. In the test mode, failed attempts are retried hourly for the next 72 hours
+
+
+## Supported events
+
+<TabsMulti language="json" links={{customer_id_failed: "Customer Identification Failed", customer_id_success: "Customer Identification Successful", charge_dispute_create: "Dispute Created",
+    charge_dispute_remind: "Dispute Reminder", charge_dispute_resolve: "Dispute Resolved", invoice_created: "Invoice Created", invoice_failed: "Invoice Failed",
+    invoice_updated: "Invoice Updated", payment_request_pending: "Payment Request Pending", payment_request_success: "Payment Request Successful", refund_failed: "Refund Failed", refund_pending: "Refund Pending", refund_processed: "Refund Processed", refund_processing: "Refund Processing",
+    subscription_created: "Subscription Created", subscription_disable: "Subscription Disabled", subscription_not_renew: "Subscription Not Renewing", subscription_expiring_cards: "Subscriptions with Expiring Cards", transaction_successful: "Transaction Successful", transfer_successful: "Transfer Successful", 
+    transfer_failed: "Transfer Failed", transfer_reversed: "Transfer Reversed"
+  }} filepath="/payments/webhooks/events.js"  />
+
+## Types of events
+Here are the events we currently raise. We would add more to this list as we hook into more actions in the future.
+<table>
+  <thead>
+    <tr>
+      <th>Event</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>charge.dispute.create</td>
+      <td>A dispute was logged against your business</td>
+    </tr>
+    <tr>
+      <td>charge.dispute.remind</td>
+      <td>A logged dispute has not been resolved</td>
+    </tr>
+    <tr>
+      <td>charge.dispute.resolve</td>
+      <td>A dispute has been resolved</td>
+    </tr>
+    <tr>
+      <td>charge.success</td>
+      <td>A successful charge was made</td>
+    </tr>
+    <tr>
+      <td>customeridentification.failed</td>
+      <td>A customer ID validation has failed</td>
+    </tr>
+    <tr>
+      <td>customeridentification.success</td>
+      <td>A customer ID validation was successful</td>
+    </tr>
+    <tr>
+      <td>invoice.create</td>
+      <td>
+        An invoice has been created for a subscription on your account. This usually happens 3 days before the subscription is due or whenever we send the customer their first pending invoice notification
+      </td>
+    </tr>
+    <tr>
+      <td>invoice.payment_failed</td>
+      <td>
+        A payment for an invoice failed
+      </td>
+    </tr>
+    <tr>
+      <td>invoice.update</td>
+      <td>
+        An invoice has been updated. This usually means we were able to charge the customer successfully. You should inspect the invoice object returned and take necessary action
+      </td>
+    </tr>
+    <tr>
+      <td>paymentrequest.pending</td>
+      <td>A payment request has been sent to a customer</td>
+    </tr>
+    <tr>
+      <td>paymentrequest.success</td>
+      <td>A payment request has been paid for</td>
+    </tr>
+    <tr>
+      <td>refund.failed</td>
+      <td>Refund cannot be processed. Your account will be credited with refund amount.</td>
+    </tr>
+    <tr>
+      <td>refund.pending</td>
+      <td>Refund initiated, waiting for response from the processor.	</td>
+    </tr>
+    <tr>
+      <td>refund.processed</td>
+      <td>Refund has successfully been processed by the processor.		</td>
+    </tr>
+    <tr>
+      <td>refund.processing</td>
+      <td>Refund has been received by the processor.		</td>
+    </tr>
+    <tr>
+      <td>subscription.create</td>
+      <td>A subscription has been created</td>
+    </tr>
+    <tr>
+      <td>subscription.disable</td>
+      <td>A subscription on your account has been disabled</td>
+    </tr>
+    <tr>
+      <td>subscription.expiring_cards</td>
+      <td>Contains information on all subscriptions with cards that are expiring that month. Sent at the beginning of the month, to merchants using Subscriptions</td>
+    </tr>
+    <tr>
+      <td>subscription.not_renew</td>
+      <td>A subscription on your account's status has changed to non-renewing. This means the subscription will not be charged on the next payment date</td>
+    </tr>
+     <tr>
+      <td>transfer.failed</td>
+      <td>A transfer you attempted has failed</td>
+    </tr>
+    <tr>
+      <td>transfer.success</td>
+      <td>A successful transfer has been completed</td>
+    </tr>
+    <tr>
+      <td>transfer.reversed</td>
+      <td>A transfer you attempted has been reversed</td>
+    </tr>
+  </tbody>
+</table>

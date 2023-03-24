@@ -1,0 +1,188 @@
+---
+title: Guides - Paystack CLI
+date: 2020-08-24
+published: false
+---
+
+<header>
+	<h1>Paystack CLI</h1>
+	<Callout type="summary" title="In a nutshell">
+		Set up, test, and manage your Paystack integration directly from the
+		terminal.
+	</Callout>
+</header>
+As a developer, your most powerful tools, from basic bash commands, to version control and deployment tools sit in your terminal, the Paystack CLI to makes it easier to set up, test, and manage your Paystack integrations right from your terminal.
+
+The Paystack CLI lets you:
+
+<UnorderedList
+	items={[
+		'Ping your preset webhook URL with sample event data',
+		'Tunnel Paystack events directly to your local server without installing third party software',
+		'Set up sample applications with fully integrated payment channels',
+		'Interact with the Paystack API',
+	]}
+/>
+
+### Getting Started
+
+To get started, <a href="https://www.npmjs.com/package/@paystack-oss/dev-cli" target="_blank" rel="noopener noreferrer">install the npm package</a> by running this command on your terminal
+
+```bash
+$ npm install -g @paystack-oss/dev-cli
+```
+
+After installation, run a `$ paystack` command from your terminal, and you're good to go!
+
+<Callout type="info" title="Minimum requirements">
+	Paystack CLI requires Node.js v8+ to run.
+</Callout>
+
+
+<table>
+    <thead>
+        <tr>
+		<th>Command</th>
+		<th>Description</th>
+	    </tr>
+    </thead>
+	<tbody>
+        
+	<tr>
+		<td>help [command...]</td>
+		<td>Provides help for a given command.</td>
+	</tr>
+	<tr>
+		<td>exit</td>
+		<td> Exits application.</td>
+	</tr>
+	<tr>
+		<td>webhook  </td>
+		<td>
+			runs a webhook endpoint health check with and listens for incoming webhooks".
+		</td>
+	</tr>
+	<tr>
+		<td> sample   </td>
+		<td> Get started quickly with a Paystack sample project.</td>
+	</tr>
+	<tr>
+		<td> login </td>
+		<td> Sign in with your Paystack username and password</td>
+	</tr>
+	<tr>
+		<td> transaction [options] "action" </td>
+		<td>
+			
+			verify, list, view, charge, export, check, transaction, initialize, fetch
+			transactions
+		</td>
+	</tr>
+	<tr>
+		<td> transferrecipient [options] "action" </td>
+		<td> create, delete, list, update transferrecipient</td>
+	</tr>
+	<tr>
+		<td> transfer [options] "action" </td>
+		<td>
+			list, finalize, initiate, verify, disable, enable, initiate, finalize,
+			fetch, list, resend transfer
+		</td>
+	</tr>
+        </tbody>
+</table>
+
+<Callout type="info" title="View all commands">
+	To view available commands, run <code>$ help</code>
+</Callout>
+
+### Managing Webhooks
+
+Whenever actions are carried out on your Paystack account, we trigger events which your application can listen and respond to. Before now, to implement webhook routes like these, you had to:
+
+
+<UnorderedList
+	items={[
+		'Ping your preset webhook URL with sample event data',
+		'Login to your Paystack Dashboard and set the webhook URL',
+		'Make a test payment',
+		'Review logs',
+	]}
+/>
+
+With the Paystack CLI, all these steps are reduced to running a single command
+
+```bash
+$ webhook listen localhost:8080/webhook
+```
+
+The CLI tunnels your test events to your local server running on port 8080, making it possible for you to run end-to-end tests on your Paystack integration while in development mode. 
+
+You can also run health checks on your webhook URL by sending different sample event objects to your server. Simply run:
+
+```bash
+$ webhook ping --event transfer.success --domain test
+```
+
+This sends a sample `transfer.success` event to your test webhook URL and returns the response. You can check our <Link to="/payments/webhooks">webhooks</Link> page to learn more about implementing webhooks.
+
+### Setting up sample applications
+
+We have built different sample apps and embedded them in the CLI, you can setup a sample project in your terminal by running
+
+```bash
+$ sample sample-react "~/Desktop/Work"
+```
+### Using the API
+
+All Paystack endpoints are accessible via the Paystack CLI. To test the API, all request parameters should be passed as flags as shown below.
+
+**Initializing a transaction**
+
+To initialize a transaction, run:
+
+```bash
+$ transaction initialize --amount 1000 --email customer@email.com
+```
+
+**Output**
+
+```
+authorization_url - - - -- - -- - - - - - -  - - - -  - https://checkout.paystack.com/9wvzhxlk66uylzp
+access_code - - - -- - -- - - - - - -  - - - -  - 9wvzhxlk66uylzp
+reference - - - -- - -- - - - - - -  - - - -  - se8b1ty80b
+```
+
+**Verifying a transaction**
+
+To verify a transaction, run:
+
+```
+$ transaction verify --reference T394541625653843 --domain live
+```
+
+**Output**
+
+```
+id - - - -- - -- - - - - - -  - - - -  - 521587687
+domain - - - -- - -- - - - - - -  - - - -  - live
+status - - - -- - -- - - - - - -  - - - -  - success
+reference - - - -- - -- - - - - - -  - - - -  - T394541625653843
+amount - - - -- - -- - - - - - -  - - - -  - 100000
+gateway_response - - - -- - -- - - - - - -  - - - -  - Approved
+paid_at - - - -- - -- - - - - - -  - - - -  - 2020-02-27T17:28:14.000Z
+created_at - - - -- - -- - - - - - -  - - - -  - 2020-02-27T17:27:31.000Z
+channel - - - -- - -- - - - - - -  - - - -  - card
+currency - - - -- - -- - - - - - -  - - - -  - NGN
+ip_address - - - -- - -- - - - - - -  - - - -  - 102.67.15.8
+fees - - - -- - -- - - - - - -  - - - -  - 1500
+plan - - - -- - -- - - - - - -  - - - -  - PLN_q34mm97ac7pnqj1
+paidAt - - - -- - -- - - - - - -  - - - -  - 2020-02-27T17:28:14.000Z
+createdAt - - - -- - -- - - - - - -  - - - -  - 2020-02-27T17:27:31.000Z
+requested_amount - - - -- - -- - - - - - -  - - - -  - 100000
+transaction_date - - - -- - -- - - - - - -  - - - -  - 2020-02-27T17:27:31.000Z
+```
+
+<Callout type="info" title="Important to note">
+	By default, all commands are run in test mode, to switch to live, use the flag <code>--domain live</code> at the end of the command
+</Callout>

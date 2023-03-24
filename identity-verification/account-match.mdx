@@ -1,0 +1,88 @@
+---
+title: Account Match
+date: 2021-09-07
+published: true
+---
+
+<header>
+	<h1>Account Match</h1>
+  <p>The Account Match service allows you to verify that an account number is tied to a BVN.</p>
+</header>
+
+## Validating an account 
+<Callout type="info" title="Feature Availability">
+  This feature is only available to businesses in Nigeria.
+</Callout>
+
+
+The `GET` endpoint takes the following query parameters:
+
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>Required</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>account_number</code></td>
+      <td>Yes</td>
+      <td>A 10 digit Nigerian bank account number</td>
+    </tr>
+    <tr>
+      <td><code>bank_code</code></td>
+      <td>Yes</td>
+      <td>Bank code of customer's bank. You can fetch the list of bank codes from the <ApiLink title="List Banks" path="miscellaneous-bank" /> endpoint</td>
+    </tr>
+    <tr>
+      <td><code>bvn</code></td>
+      <td>Yes</td>
+      <td>The customer's 11 digits Bank Verification Number</td>
+    </tr>
+  </tbody>
+</table>
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/identity/account/match.js" /> 
+
+If account number and BVN matches, the `status` of the response is `true` with the following `data` object parameters:
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>is_match</code></td>
+      <td>boolean</td>
+      <td>This is <code>true</code> when the parameters matches, else it's <code>false</code></td>
+    </tr>
+    <tr>
+      <td><code>account_name</code></td>
+      <td>string</td>
+      <td>The name tied to the customer's account</td>
+    </tr>
+    <tr>
+      <td><code>account_number</code></td>
+      <td>string</td>
+      <td>The customer's 10 digit Nigerian bank account number</td>
+    </tr>
+    <tr>
+      <td><code>bvn</code></td>
+      <td>string</td>
+      <td>The customer's 11 digits Bank Verification Number</td>
+    </tr>
+  </tbody>
+</table>
+
+<Callout type="warning" title="Invalid Account">
+  We don't return the customer's account name, account number and BVN when their details don't match.
+</Callout>
+
+## Pricing
+This service cost <strong>&#8358;10 per call</strong>, but you get <strong>10 free calls per month</strong>. 
+After exhausting the 10 free calls, registered businesses would have to top up your Paystack balance to continue using this service.

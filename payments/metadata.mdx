@@ -1,0 +1,57 @@
+---
+title: Metadata
+date: 2020-11-26
+published: true
+---
+
+<header>
+	<h1>Metadata</h1>
+  <p>Add custom data to your request payload</p>
+</header>
+
+
+## Crafting Metadata
+
+With metadata, you can add additional parameters that an endpoint doesn't accept naturally. Crafting metadata will depend on your language's handling of JSON. Common metadata are:
+<UnorderedList items={["Invoice ID", "Cart ID", "Cart Items", "Payment medium (site/app)"]} />
+
+There are two ways to add parameters to the metadata object:
+
+<OrderedList items={[
+  <span><strong>Key/value pair</strong>: You pass the parameter as a key and value pair like this: <code>cart_id: IU929</code>. Parameters passed this way don't show up on the dashboard, however, they are returned with the API response.</span>,
+  <span><strong>Custom Fields</strong>: The <code>custom_fields</code> key is reserved for an array of custom fields that should show on the dashboard when you click the transaction.</span>,
+  ]} 
+/> 
+
+Custom fields have 3 keys: `display_name`, `variable_name`, and `value`. The display name will be the label for the value when displaying.
+
+<Tabs links={{json: "JSON"}} filepath="/payments/custom-fields/metadata.js" />
+
+## Cancel Action
+
+You can redirect your users to a chosen URL when they cancel a payment. This is done by setting a `cancel_action` in your metadata:
+
+```json
+"metadata": {
+  "cancel_action": "https://your-cancel-url.com"
+}
+```
+
+## Custom Filters
+Custom filters allow you control how a transaction is completed.
+
+### Recurring (boolean)
+If you need to directly debit the customer in future, specify `recurring=true` under this object to ensure we accept only verve cards that support recurring billing. And force a bank authentication for MasterCard and VISA.
+
+
+### Banks (array)
+If you only want some particular bank(s) cards to be accepted for a transaction, specify the bank codes in the object thus: `banks: ["057","100"]` . To get the list of bank codes supported, please check this API endpoint: <ApiLink title="List Banks" path="miscellaneous-bank" />.
+
+### Card Brands (array)
+If you only want some particular card brand(s) to be accepted for a transaction, specify the brands in the object thus: `brands: ["visa","verve"]` 
+
+<Tabs links={{json: "JSON"}} filepath="/payments/custom-filters/metadata.js" />
+
+This would mean the transaction is intended to be for enrolling on a recurring billing platform. And we should only accept a visa card from Zenith (057) or Suntrust bank (100).
+
+All keys are optional.

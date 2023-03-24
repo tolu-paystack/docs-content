@@ -1,0 +1,25 @@
+---
+title: Bulk Transfers
+date: 2019-01-24
+published: true
+---
+
+<header>
+	<h1>Bulk Transfers</h1>
+    <p>Pay multiple recipients at once with Paystack bulk transfer feature</p>
+</header>
+
+The bulk transfers endpoint takes an array of objects containing `transferrecipients` and `amount` and queues them for processing.
+
+<Callout type="info" title="Feature Availability">
+  This feature is only available to businesses in Nigeria and Ghana.
+</Callout>
+
+<RequestResponse links={{bash: "cURL", js: "Node", php: "PHP"}} filepath="/transfers/bulk/initiate-transfer.js"  />
+   
+
+Once these transfers have been queued, the same rules apply as single transfers, the transfer status would be `pending` while the transfer is being processed. Test transfers always return success, because there is no processing involved. The live transfers processing usually take between a few seconds and a few minutes. When it's done processing, a notification is sent to your webhook URL.
+
+If the transfer is successful, you will get a `transfer.success` notification. If the transfer failed, you will get a `transfer.failed` event. Learn more about  <Link to="/payments/webhooks">Paystack events and webhook here</Link>.
+
+The response for a transfer also contains a **unique transfer code** to identify this transfer. You can use this code to call the <ApiLink title="Fetch Transfer" path="transfer-fetch" /> endpoint to fetch status and details of the transfer anytime you want.

@@ -1,0 +1,135 @@
+---
+title: Refunds
+date: 2019-01-24
+published: true
+---
+
+<header>
+	<h1>Refunds</h1>
+	<Callout type="summary" title="In a nutshell">
+		You can repay your customer for a previous transaction in part or fully by initiating a refund and listening to notifications.
+	</Callout>
+</header>
+
+## Getting started
+
+Sometimes, a customer makes a request for their money after a successful transaction. Other times, an order cannot be fulfilled after payment has been made. 
+In either case, you need to consider if you should initiate a:
+
+1. Partial refund or,
+2. Full refund
+
+Our <ApiLink title="Refund" path="refund" /> allows you to repay your customers in part or fully. You simply initiate a refund request and we keep you updated on the status of the refund.
+
+## Create a refund
+
+To initiate a refund, you make a `POST` request to the <ApiLink title="Create Refund" path="refund-create" /> and pass the transaction ID or reference in the `transaction` field. If an amount isn't passed, we handle the request as a full refund.
+
+If you want to do a partial refund, you pass an `amount` parameter with the amount to refund. The refund amount must not be more than the original transaction amount.
+
+<RequestResponse
+links={{ bash: 'cURL', js: 'Node', php: 'PHP' }}
+filepath="/payments/refunds/create-refund.js"
+/>
+
+<Callout type="warning" title="Maximum refund amount">
+	The refund amount must not be more than the original transaction amount.
+</Callout>
+
+## List Refunds
+
+To pull a list of your refunds, you can use the <ApiLink title="List Refunds" path="refund-list" /> to fetch all your refunds.
+
+<RequestResponse
+	links={{ bash: 'cURL', js: 'Node', php: 'PHP' }}
+	filepath="/payments/refunds/list-refunds.js"
+/>
+
+## Refund status
+
+During the lifecycle of a refund, its status changes based on the actions performed by the refund processor. When the status of a refund changes, the status of the associated transaction follows suit.
+
+The table below shows the relationship between the status of a refund and its associated transaction:
+
+<table>
+	<thead>
+		<tr>
+			<th>Status</th>
+			<th>Description</th>
+			<th>Transaction Status</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Pending</td>
+			<td>Refund initiated, waiting for response from the processor</td>
+			<td>Reversal Pending</td>
+		</tr>
+		<tr>
+			<td>Processing</td>
+			<td>Refund has been received by the processor.</td>
+			<td>Reversal Pending</td>
+		</tr>
+		<tr>
+			<td>Failed</td>
+			<td>
+				Refund cannot be processed. Your account is credited with refund amount.
+			</td>
+			<td>Success</td>
+		</tr>
+		<tr>
+			<td>Processed</td>
+			<td>Refund has successfully been processed by the processor.</td>
+			<td>Reversed</td>
+		</tr>
+	</tbody>
+</table>
+<Callout type="info" title="Processed Refunds">
+	When a refund is marked as <code>processed</code>, it may still take up to 10 business days for customers to receive their funds.
+</Callout>
+
+## Listen to notifications
+
+<Callout type="info" title="Receiving Notifications">
+	In order to receive notifications, you need to <Link to="/payments/webhooks">implement a webhook URL</Link> and set
+	the webhook URL in your <a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" rel="noopener noreferrer">Paystack dashboard</a>.
+</Callout>
+We send different events based on the state of a refund. You can listen to the following events to stay updated on the state of a customer's refund:
+
+<table>
+	<thead>
+		<tr>
+			<th>Event</th>
+			<th>Description</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>refund.pending</td>
+			<td>This is sent when a refund is initiated and we are waiting for a response from the processor.</td>
+		</tr>
+		<tr>
+			<td>refund.processing</td>
+			<td>This is sent when the refund has been received by the processor.</td>
+		</tr>
+		<tr>
+			<td>refund.failed</td>
+			<td>
+				This is sent when a refund cannot be processed. Your account is credited with the refund amount.
+			</td>
+		</tr>
+		<tr>
+			<td>refund.processed</td>
+			<td>This is sent when the refund has been successfully processed by the processor.</td>
+		</tr>
+	</tbody>
+</table>
+
+<TabsMulti language="json" links={{
+		refund_pending: "Refund Pending",
+		refund_processing: "Refund Processing", 
+		refund_processed: "Refund Processed",
+    refund_failed: "Refund Failed"
+  }} 
+	filepath="/payments/refunds/events.js"  
+/>
